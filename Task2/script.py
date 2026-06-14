@@ -19,8 +19,8 @@ from torchvision import transforms, models
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
-DATA_DIR        = "data/train"
-ANNOTATIONS     = "data/train/_annotations.coco.json"
+DATA_DIR        = "data/8-Ball Pool/train"
+ANNOTATIONS     = "data/8-Ball Pool/train/_annotations.coco.json"
 MODEL_PATH      = "model.pth"
 BALL_CATEGORY_NAMES = {"Black", "Cue", "Solid", "Striped"}
 
