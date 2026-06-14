@@ -22,6 +22,7 @@ from torchvision import transforms, models
 DATA_DIR        = "data/train"
 ANNOTATIONS     = "data/train/_annotations.coco.json"
 MODEL_PATH      = "model.pth"
+BALL_CATEGORY_NAMES = {"Black", "Cue", "Solid", "Striped"}
 
 IMG_SIZE        = 224
 BATCH_SIZE      = 16
@@ -64,16 +65,19 @@ class BallCountDataset(Dataset):
             img = self.transform(img)
         return img, torch.tensor(count, dtype=torch.float32)
 
-
 def load_coco_samples(annotations_path, data_dir):
-    """Parse COCO JSON and return list of (image_path, ball_count)."""
     with open(annotations_path, "r") as f:
         coco = json.load(f)
 
-    # count annotations per image_id
+    ball_cat_ids = {
+        c["id"] for c in coco["categories"]
+        if c["name"] in BALL_CATEGORY_NAMES
+    }
+
     count_per_image = defaultdict(int)
     for ann in coco["annotations"]:
-        count_per_image[ann["image_id"]] += 1
+        if ann["category_id"] in ball_cat_ids:
+            count_per_image[ann["image_id"]] += 1
 
     samples = []
     for img_info in coco["images"]:
@@ -84,7 +88,6 @@ def load_coco_samples(annotations_path, data_dir):
         samples.append((img_path, count))
 
     return samples
-
 
 def split_samples(samples, train_ratio=0.70, val_ratio=0.15, seed=42):
     random.seed(seed)
@@ -137,6 +140,7 @@ eval_transform = transforms.Compose([
 def train(model, loader, optimizer, criterion):
     model.train()
     total_loss = 0.0
+    all_preds, all_labels = [], []
     for imgs, labels in loader:
         imgs, labels = imgs.to(DEVICE), labels.to(DEVICE)
         optimizer.zero_grad()
@@ -145,7 +149,16 @@ def train(model, loader, optimizer, criterion):
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * len(imgs)
-    return total_loss / len(loader.dataset)
+        all_preds.extend(preds.detach().cpu().numpy())
+        all_labels.extend(labels.cpu().numpy())
+
+    avg_loss   = total_loss / len(loader.dataset)
+    all_preds  = np.array(all_preds)
+    all_labels = np.array(all_labels)
+    mae  = np.mean(np.abs(all_preds - all_labels))
+    rmse = np.sqrt(np.mean((all_preds - all_labels) ** 2))
+    acc  = np.mean(np.round(all_preds).astype(int) == all_labels.astype(int))
+    return avg_loss, mae, rmse, acc
 
 
 @torch.no_grad()
@@ -202,17 +215,14 @@ def run_training():
     best_epoch    = 0
 
     for epoch in range(1, NUM_EPOCHS + 1):
-        train_loss = train(model, train_loader, optimizer, criterion)
+        train_loss, train_mae, train_rmse, train_acc = train(model, train_loader, optimizer, criterion)
         val_loss, val_mae, val_rmse, val_acc = evaluate(model, val_loader, criterion)
         scheduler.step(val_loss)
 
         print(
             f"Epoch {epoch:03d}/{NUM_EPOCHS} | "
-            f"train_loss: {train_loss:.4f} | "
-            f"val_loss: {val_loss:.4f} | "
-            f"val_mae: {val_mae:.3f} | "
-            f"val_rmse: {val_rmse:.3f} | "
-            f"val_acc: {val_acc*100:.1f}%"
+            f"train_loss: {train_loss:.4f} | train_mae: {train_mae:.3f} | train_rmse: {train_rmse:.3f} | train_acc: {train_acc * 100:.1f}% | "
+            f"val_loss: {val_loss:.4f} | val_mae: {val_mae:.3f} | val_rmse: {val_rmse:.3f} | val_acc: {val_acc * 100:.1f}%"
         )
 
         if val_loss < best_val_loss:
