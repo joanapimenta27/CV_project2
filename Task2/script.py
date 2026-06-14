@@ -23,7 +23,7 @@ MODEL_PATH   = "model.pth"
 
 IMG_SIZE     = 224
 BATCH_SIZE   = 16
-NUM_EPOCHS   = 80
+NUM_EPOCHS   = 100
 LR           = 1e-4
 WEIGHT_DECAY = 1e-4
 SEED         = 42
