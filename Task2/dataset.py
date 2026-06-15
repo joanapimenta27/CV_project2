@@ -204,6 +204,12 @@ def main():
             print(f"  → {len(samples)} added to train/val pool")
 
     # split combined pool into 80% train / 20% val
+    # oversample original dataset to increase its weight in training pool
+    original_samples = [s for s in all_non_test if "8-Ball Pool" in s["image_path"]]
+    all_non_test.extend(original_samples * 4)
+    print(f"  After oversampling original: {len(all_non_test)} total samples in pool")
+
+    # split combined pool into 80% train / 20% val
     train_samples, val_samples = split_train_val(all_non_test, VAL_RATIO, SEED)
 
     print(f"\n── Final Split ───────────────────────────────────────")
