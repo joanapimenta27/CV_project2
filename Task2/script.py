@@ -29,7 +29,7 @@ LR           = 1e-4
 WEIGHT_DECAY = 1e-4
 SEED         = 42
 
-BACKBONES = ["resnet18", "efficientnet_b0", "vgg16", "inception_v3"]
+BACKBONES = ["resnet18", "efficientnet_b0", "vgg16", "inception_v3", "mobilenet_v3"]
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -100,6 +100,11 @@ def build_model(backbone):
         model.AuxLogits.fc = nn.Linear(model.AuxLogits.fc.in_features, 1)
         in_features = model.fc.in_features
         model.fc = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, 1))
+
+    elif backbone == "mobilenet_v3":
+        model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT)
+        in_features = model.classifier[3].in_features
+        model.classifier[3] = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, 1))
 
     return model
 
