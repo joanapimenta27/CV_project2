@@ -1,5 +1,10 @@
-development_set/
 .venv/
+cv_project2/
 output
 .DS_store
 yolo_dataset/
+images/
+12-image-retrieval.ipynb
+yolov8n.pt
+runs/
+retrieval_model.pt
