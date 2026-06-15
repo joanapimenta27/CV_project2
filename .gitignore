@@ -8,3 +8,4 @@ images/
 yolov8n.pt
 runs/
 retrieval_model.pt
+.idea/
