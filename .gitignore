@@ -9,3 +9,7 @@ yolov8n.pt
 runs/
 retrieval_model.pt
 .idea/
+__pycache__/
+yolo_data/
+data/
+models/
