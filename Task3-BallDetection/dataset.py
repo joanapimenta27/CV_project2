@@ -1,7 +1,9 @@
 """
 Dataset preparation for Task 3 - Pool Ball Detection.
 
-All datasets are collapsed to a single class: "ball" (class 0).
+All datasets are mapped to a shared 4-class taxonomy taken from the original
+8-Ball Pool annotations: Cue, Solid, Striped, Black (the "Dot" class and the
+"balls" supercategory are excluded).
 
 Split strategy:
   - Test : 20% of original dataset only (held out forever)
@@ -39,14 +41,51 @@ TEST_RATIO = 0.20  # from original dataset only
 DATA_ROOT  = "data"       # relative to Task3-BallDetection/
 YOLO_ROOT  = "yolo_data"  # where YOLO datasets are written
 
-CLASS_NAMES = ["ball"]    # single unified class
+# Unified class taxonomy, derived from the original 8-Ball Pool dataset
+# annotations, excluding the "Dot" (table spots) class and the "balls"
+# supercategory. These are the classes the detectors must output.
+CLASS_NAMES = ["Cue", "Solid", "Striped", "Black"]
+CLASS_TO_ID = {name: i for i, name in enumerate(CLASS_NAMES)}
 
-# ─── Category sets per raw dataset ────────────────────────────────────────────
+# ─── Per-dataset category → unified class mapping ─────────────────────────
+# Any category name not present in a map is dropped (its boxes are skipped).
 
-BILLIARD_CATS = {
-    "Cue_Ball", "Eight", "Five", "Four", "Nine",
-    "One", "Seven", "Six", "Three", "Two", "Object_Ball",
-    "ObjectBall-TargetBall", "Break",
+# Original 8-Ball Pool: keep the four ball classes, drop "Dot" and "balls".
+ORIGINAL_MAP = {
+    "Cue":     "Cue",
+    "Solid":   "Solid",
+    "Striped": "Striped",
+    "Black":   "Black",
+}
+
+# Pool Billiard: numbered balls → standard 8-ball convention
+# (1-7 solids, 8 black, 9-15 stripes). Generic/ambiguous categories
+# ("Object_Ball", "Break", "ObjectBall-TargetBall") are dropped.
+BILLIARD_MAP = {
+    "Cue_Ball": "Cue",
+    "One":   "Solid", "Two":  "Solid", "Three": "Solid", "Four": "Solid",
+    "Five":  "Solid", "Six":  "Solid", "Seven": "Solid",
+    "Eight": "Black",
+    "Nine":  "Striped",
+}
+
+# Pool Balls Detection v13: ball numbers 0-15 → 8-ball convention
+# (0 = cue, 1-7 solids, 8 black, 9-15 stripes).
+V13_MAP = {
+    "0": "Cue",
+    "1": "Solid", "2": "Solid", "3": "Solid", "4": "Solid",
+    "5": "Solid", "6": "Solid", "7": "Solid",
+    "8": "Black",
+    "9":  "Striped", "10": "Striped", "11": "Striped", "12": "Striped",
+    "13": "Striped", "14": "Striped", "15": "Striped",
+}
+
+# Pool Ball Detection v5: a different (blackball-style) variant whose
+# "blue"/"yellow" balls have no solid/striped equivalent, so they are
+# dropped; only the unambiguous cue and black balls are mapped.
+V5_MAP = {
+    "cue_ball": "Cue",
+    "black":    "Black",
 }
 
 # DATASETS: all raw annotation sources
@@ -57,7 +96,7 @@ DATASETS = [
         "annotations": f"{DATA_ROOT}/8-Ball Pool.v3i.coco/train/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/8-Ball Pool.v3i.coco/train",
         "is_original": True,
-        "ball_cats":   {"Black", "Cue", "Dot", "Solid", "Striped", "balls"},
+        "cat_map":     ORIGINAL_MAP,
     },
     # ── Pool Billiard ─────────────────────────────────────────────────────────
     {
@@ -65,21 +104,21 @@ DATASETS = [
         "annotations": f"{DATA_ROOT}/Pool Billiard.v1i.coco/train/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Billiard.v1i.coco/train",
         "is_original": False,
-        "ball_cats":   BILLIARD_CATS,
+        "cat_map":     BILLIARD_MAP,
     },
     {
         "name":        "billiard_valid",
         "annotations": f"{DATA_ROOT}/Pool Billiard.v1i.coco/valid/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Billiard.v1i.coco/valid",
         "is_original": False,
-        "ball_cats":   BILLIARD_CATS,
+        "cat_map":     BILLIARD_MAP,
     },
     {
         "name":        "billiard_test",
         "annotations": f"{DATA_ROOT}/Pool Billiard.v1i.coco/test/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Billiard.v1i.coco/test",
         "is_original": False,
-        "ball_cats":   BILLIARD_CATS,
+        "cat_map":     BILLIARD_MAP,
     },
     # ── Pool Balls Detection v13 ──────────────────────────────────────────────
     {
@@ -87,21 +126,21 @@ DATASETS = [
         "annotations": f"{DATA_ROOT}/Pool Balls Detection.v13-v13.coco/train/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Balls Detection.v13-v13.coco/train",
         "is_original": False,
-        "ball_cats":   None,   # all categories are balls
+        "cat_map":     V13_MAP,
     },
     {
         "name":        "balls_det_v13_valid",
         "annotations": f"{DATA_ROOT}/Pool Balls Detection.v13-v13.coco/valid/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Balls Detection.v13-v13.coco/valid",
         "is_original": False,
-        "ball_cats":   None,
+        "cat_map":     V13_MAP,
     },
     {
         "name":        "balls_det_v13_test",
         "annotations": f"{DATA_ROOT}/Pool Balls Detection.v13-v13.coco/test/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Balls Detection.v13-v13.coco/test",
         "is_original": False,
-        "ball_cats":   None,
+        "cat_map":     V13_MAP,
     },
     # ── Pool Ball Detection v5 ────────────────────────────────────────────────
     {
@@ -109,21 +148,21 @@ DATASETS = [
         "annotations": f"{DATA_ROOT}/Pool Ball Detection.v5i.coco/train/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Ball Detection.v5i.coco/train",
         "is_original": False,
-        "ball_cats":   None,
+        "cat_map":     V5_MAP,
     },
     {
         "name":        "ball_det_v5_valid",
         "annotations": f"{DATA_ROOT}/Pool Ball Detection.v5i.coco/valid/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Ball Detection.v5i.coco/valid",
         "is_original": False,
-        "ball_cats":   None,
+        "cat_map":     V5_MAP,
     },
     {
         "name":        "ball_det_v5_test",
         "annotations": f"{DATA_ROOT}/Pool Ball Detection.v5i.coco/test/_annotations.coco.json",
         "images_dir":  f"{DATA_ROOT}/Pool Ball Detection.v5i.coco/test",
         "is_original": False,
-        "ball_cats":   None,
+        "cat_map":     V5_MAP,
     },
 ]
 
@@ -156,7 +195,7 @@ EXPERIMENTS = [
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-def load_detection_samples(annotations_path, images_dir, ball_cats):
+def load_detection_samples(annotations_path, images_dir, cat_map):
     """
     Parse a COCO JSON and return a list of detection samples.
 
@@ -166,34 +205,36 @@ def load_detection_samples(annotations_path, images_dir, ball_cats):
             "width":      int,
             "height":     int,
             "boxes":      [[x, y, w, h], ...],  # absolute pixels, COCO format
+            "labels":     [class_id, ...],      # unified class id per box
         }
 
-    All matching annotations are collapsed to a single "ball" class.
-    ball_cats: set of category names to keep, or None to keep all.
+    cat_map: dict mapping COCO category name -> unified class name.
+             Categories absent from the map are dropped.
     """
     with open(annotations_path) as f:
         coco = json.load(f)
 
-    if ball_cats is not None:
-        ball_cat_ids = {c["id"] for c in coco["categories"] if c["name"] in ball_cats}
-        matched = {c["name"] for c in coco["categories"] if c["id"] in ball_cat_ids}
-        all_names = {c["name"] for c in coco["categories"]}
-        print(f"    Categories  : {sorted(all_names)}")
-        print(f"    Kept as ball: {sorted(matched)}")
-    else:
-        ball_cat_ids = None
-        all_names = {c["name"] for c in coco["categories"]}
-        print(f"    Categories  : {sorted(all_names)}  (all kept)")
+    # COCO category id -> unified class id (only for mapped categories)
+    catid_to_classid = {
+        c["id"]: CLASS_TO_ID[cat_map[c["name"]]]
+        for c in coco["categories"] if c["name"] in cat_map
+    }
+    all_names = sorted(c["name"] for c in coco["categories"])
+    kept = {c["name"]: cat_map[c["name"]]
+            for c in coco["categories"] if c["name"] in cat_map}
+    print(f"    Categories  : {all_names}")
+    print(f"    Class map   : {kept}")
 
-    boxes_per_image = defaultdict(list)
+    boxes_per_image  = defaultdict(list)
+    labels_per_image = defaultdict(list)
     for ann in coco["annotations"]:
         if ann.get("iscrowd", 0):
             continue
-        if ball_cat_ids is None or ann["category_id"] in ball_cat_ids:
-            boxes_per_image[ann["image_id"]].append(ann["bbox"])
-
-    # Also build a fast lookup for image metadata
-    img_meta = {img["id"]: img for img in coco["images"]}
+        cid = catid_to_classid.get(ann["category_id"])
+        if cid is None:
+            continue
+        boxes_per_image[ann["image_id"]].append(ann["bbox"])
+        labels_per_image[ann["image_id"]].append(cid)
 
     samples = []
     missing = 0
@@ -207,6 +248,7 @@ def load_detection_samples(annotations_path, images_dir, ball_cats):
             "width":      img_info["width"],
             "height":     img_info["height"],
             "boxes":      boxes_per_image.get(img_info["id"], []),
+            "labels":     labels_per_image.get(img_info["id"], []),
         })
 
     if missing:
@@ -249,7 +291,7 @@ def build_splits(exp_dataset_names):
         ds = ds_by_name[ds_name]
         print(f"  ── {ds['name']} ──")
         samples = load_detection_samples(
-            ds["annotations"], ds["images_dir"], ds.get("ball_cats")
+            ds["annotations"], ds["images_dir"], ds["cat_map"]
         )
         print(f"    Loaded {len(samples)} images")
 
@@ -309,11 +351,11 @@ def write_yolo_split(samples, out_img_dir, out_lbl_dir):
 
         # write label file
         with open(dst_lbl, "w") as f:
-            for bbox in sample["boxes"]:
+            for bbox, cls in zip(sample["boxes"], sample["labels"]):
                 cx, cy, wn, hn = coco_bbox_to_yolo(
                     bbox, sample["width"], sample["height"]
                 )
-                f.write(f"0 {cx:.6f} {cy:.6f} {wn:.6f} {hn:.6f}\n")
+                f.write(f"{cls} {cx:.6f} {cy:.6f} {wn:.6f} {hn:.6f}\n")
 
 
 def build_yolo_dataset(exp_name, train_s, val_s, test_s):

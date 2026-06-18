@@ -13,3 +13,4 @@ __pycache__/
 yolo_data/
 data/
 models/
+data_analysis/

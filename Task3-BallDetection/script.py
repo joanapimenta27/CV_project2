@@ -13,6 +13,7 @@ Models:
   DETR  : facebook/detr-resnet-50 finetuned via transformers
 
 Metrics reported: mAP@50, mAP@50:95, Precision, Recall
+Accuracy is reported as detection accuracy: TP / (TP + FP + FN), derived from precision and recall.
 """
 
 import os
@@ -28,6 +29,9 @@ from torch.utils.data import Dataset, DataLoader
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
+TASK_DIR      = Path(__file__).resolve().parent
+RUNS_DIR      = TASK_DIR / "runs"
+
 SEED          = 42
 YOLO_EPOCHS   = 50
 DETR_EPOCHS   = 50
@@ -36,9 +40,9 @@ LR_DETR       = 1e-5
 WEIGHT_DECAY  = 1e-4
 IMG_SIZE_YOLO = 640
 IMG_SIZE_DETR = 800
-MODELS_DIR    = "models"
-RESULTS_FILE  = "results.txt"
-NUM_CLASSES   = 1   # single "ball" class
+MODELS_DIR    = str(TASK_DIR / "models")
+RESULTS_FILE  = str(TASK_DIR / "results.txt")
+NUM_CLASSES   = 4   # Cue, Solid, Striped, Black (dataset classes, "Dot" excluded)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pin_memory = DEVICE.type == "cuda"
@@ -71,7 +75,7 @@ class DetectionDataset(Dataset):
         pil_image : PIL.Image (RGB)  — processor is applied in the collate fn
         target    : dict with keys
             "boxes"       : FloatTensor [N, 4]  (cx, cy, w, h) normalised [0,1]
-            "class_labels": LongTensor  [N]     all zeros (single "ball" class)
+            "class_labels": LongTensor  [N]     unified class id per box
     """
 
     def __init__(self, samples):
@@ -98,7 +102,7 @@ class DetectionDataset(Dataset):
         else:
             boxes_norm = np.zeros((0, 4), dtype=np.float32)
 
-        labels = torch.zeros(len(boxes_norm), dtype=torch.long)
+        labels = torch.tensor(s["labels"], dtype=torch.long)
         boxes  = torch.tensor(boxes_norm, dtype=torch.float32)
 
         return img, {"class_labels": labels, "boxes": boxes}
@@ -108,8 +112,7 @@ def make_detr_collate_fn(processor):
     """
     Returns a collate function that processes each PIL image individually
     (resize + normalise), then zero-pads all tensors to the batch maximum
-    height/width so they can be stacked.  DetrImageProcessor does not
-    accept a 'padding' kwarg, so we pad manually here.
+    height/width so they can be stacked. 
     """
     def collate_fn(batch):
         images  = [item[0] for item in batch]
@@ -167,16 +170,18 @@ def cxcywh_to_xyxy(boxes):
 @torch.no_grad()
 def compute_detr_map(model, loader, iou_thresholds=None):
     """
-    Simple single-class mAP computation for DETR.
-    Returns dict: {mAP50, mAP50_95, precision, recall}
+    Multi-class mAP computation for DETR (averaged over NUM_CLASSES).
+    Returns dict: {mAP50, mAP50_95, precision, recall, accuracy}
     """
     if iou_thresholds is None:
         iou_thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
 
     model.eval()
     all_det_scores = []  # list of 1D tensors per image
-    all_det_boxes  = []  # list of [K,4] tensors per image (xyxy, normalised)
+    all_det_boxes  = []  # list of [Q,4] tensors per image (xyxy, normalised)
+    all_det_labels = []  # list of 1D tensors per image (predicted class id)
     all_gt_boxes   = []  # list of [M,4] tensors per image (xyxy, normalised)
+    all_gt_labels  = []  # list of 1D tensors per image (gt class id)
 
     for pixel_values, targets in loader:
         pixel_values = pixel_values.to(DEVICE)
@@ -191,34 +196,75 @@ def compute_detr_map(model, loader, iou_thresholds=None):
         scores, labels = probs.max(-1)           # [B, Q]
 
         for i in range(len(targets)):
-            # only keep predictions for class 0 (ball) above a tiny threshold
-            mask = (labels[i] == 0)
-            s    = scores[i][mask].cpu()
-            b    = cxcywh_to_xyxy(boxes[i][mask]).cpu()
+            all_det_scores.append(scores[i].cpu())
+            all_det_boxes.append(cxcywh_to_xyxy(boxes[i]).cpu())
+            all_det_labels.append(labels[i].cpu())
 
             gt_raw = targets[i]["boxes"]   # [M, 4] cx,cy,w,h normalised
             if len(gt_raw) > 0:
                 gt = cxcywh_to_xyxy(gt_raw)
             else:
                 gt = torch.zeros((0, 4))
-
-            all_det_scores.append(s)
-            all_det_boxes.append(b)
             all_gt_boxes.append(gt)
+            all_gt_labels.append(targets[i]["class_labels"])
 
-    # compute AP at each IoU threshold
-    aps = []
+    # mAP = mean over classes of AP, averaged over IoU thresholds
+    aps_per_threshold = []
     for iou_thr in iou_thresholds:
-        ap = _compute_ap_at_iou(all_det_scores, all_det_boxes, all_gt_boxes, iou_thr)
-        aps.append(ap)
+        class_aps = []
+        for cls in range(NUM_CLASSES):
+            ds, db, gb = _filter_by_class(
+                all_det_scores, all_det_boxes, all_det_labels,
+                all_gt_boxes, all_gt_labels, cls,
+            )
+            class_aps.append(_compute_ap_at_iou(ds, db, gb, iou_thr))
+        aps_per_threshold.append(float(np.mean(class_aps)))
 
-    ap50     = aps[0]
-    ap50_95  = float(np.mean(aps))
+    ap50     = aps_per_threshold[0]
+    ap50_95  = float(np.mean(aps_per_threshold))
 
-    # precision / recall at IoU=0.50 at best F1 threshold
-    precision, recall = _pr_at_iou(all_det_scores, all_det_boxes, all_gt_boxes, 0.50)
+    # precision / recall at IoU=0.50, averaged over classes
+    precs, recs = [], []
+    for cls in range(NUM_CLASSES):
+        ds, db, gb = _filter_by_class(
+            all_det_scores, all_det_boxes, all_det_labels,
+            all_gt_boxes, all_gt_labels, cls,
+        )
+        p, r = _pr_at_iou(ds, db, gb, 0.50)
+        precs.append(p)
+        recs.append(r)
+    precision = float(np.mean(precs))
+    recall    = float(np.mean(recs))
+    accuracy  = _detection_accuracy(precision, recall)
 
-    return {"mAP50": ap50, "mAP50_95": ap50_95, "precision": precision, "recall": recall}
+    return {
+        "mAP50": ap50,
+        "mAP50_95": ap50_95,
+        "precision": precision,
+        "recall": recall,
+        "accuracy": accuracy,
+    }
+
+
+def _filter_by_class(all_scores, all_boxes, all_labels,
+                     all_gt_boxes, all_gt_labels, cls):
+    """
+    Restrict per-image detections and ground truth to a single class `cls`.
+    Returns (det_scores, det_boxes, gt_boxes) aligned per image, so the
+    single-class AP/PR helpers can be reused directly.
+    """
+    det_scores, det_boxes, gt_boxes = [], [], []
+    for scores, boxes, labels in zip(all_scores, all_boxes, all_labels):
+        mask = labels == cls
+        det_scores.append(scores[mask])
+        det_boxes.append(boxes[mask])
+    for gboxes, glabels in zip(all_gt_boxes, all_gt_labels):
+        if len(gboxes) > 0:
+            gmask = glabels == cls
+            gt_boxes.append(gboxes[gmask])
+        else:
+            gt_boxes.append(torch.zeros((0, 4)))
+    return det_scores, det_boxes, gt_boxes
 
 
 def _compute_ap_at_iou(all_scores, all_boxes, all_gt, iou_thr):
@@ -281,6 +327,10 @@ def _pr_at_iou(all_scores, all_boxes, all_gt, iou_thr):
         for j in range(len(scores)):
             det_list.append((scores[j].item(), img_idx, j))
     det_list.sort(key=lambda x: -x[0])
+
+    # no detections for this class → zero precision/recall
+    if len(det_list) == 0:
+        return 0.0, 0.0
 
     tp_arr = np.zeros(len(det_list))
     fp_arr = np.zeros(len(det_list))
@@ -444,6 +494,7 @@ def _print_detr_metrics(m, name):
     print(f"  mAP@50:95 : {m['mAP50_95']:.4f}")
     print(f"  Precision : {m['precision']:.4f}")
     print(f"  Recall    : {m['recall']:.4f}")
+    print(f"  Accuracy  : {m['accuracy']:.4f}")
 
 
 # ─── YOLO training ────────────────────────────────────────────────────────────
@@ -457,7 +508,7 @@ def run_yolo_experiment(exp_name, yaml_path):
     print(f"  YAML  : {yaml_path}")
     print(f"{'='*60}")
 
-    run_dir  = os.path.join("runs", "yolo", exp_name)
+    run_dir  = os.path.join(str(RUNS_DIR), "yolo", exp_name)
     weights  = os.path.join(run_dir, "weights", "best.pt")
 
     if os.path.exists(weights):
@@ -471,7 +522,7 @@ def run_yolo_experiment(exp_name, yaml_path):
             imgsz       = IMG_SIZE_YOLO,
             batch       = BATCH_SIZE,
             device      = 0 if torch.cuda.is_available() else "cpu",
-            project     = os.path.join("runs", "yolo"),
+            project     = str(RUNS_DIR / "yolo"),
             name        = exp_name,
             exist_ok    = True,
             seed        = SEED,
@@ -502,6 +553,7 @@ def run_yolo_experiment(exp_name, yaml_path):
         "mAP50_95":  float(results.box.map),
         "precision": float(results.box.mp),
         "recall":    float(results.box.mr),
+        "accuracy":  _detection_accuracy(float(results.box.mp), float(results.box.mr)),
     }
 
     print(f"\n── YOLO Test Results [{exp_name}] ─────────────────────")
@@ -509,6 +561,7 @@ def run_yolo_experiment(exp_name, yaml_path):
     print(f"  mAP@50:95 : {metrics['mAP50_95']:.4f}")
     print(f"  Precision : {metrics['precision']:.4f}")
     print(f"  Recall    : {metrics['recall']:.4f}")
+    print(f"  Accuracy  : {metrics['accuracy']:.4f}")
 
     return metrics
 
@@ -517,7 +570,7 @@ def run_yolo_experiment(exp_name, yaml_path):
 
 def save_results(all_results):
     """
-    all_results: list of {exp_name, model, mAP50, mAP50_95, precision, recall}
+    all_results: list of {exp_name, model, mAP50, mAP50_95, precision, recall, accuracy}
     """
     col = 30
     with open(RESULTS_FILE, "w") as f:
@@ -532,10 +585,11 @@ def save_results(all_results):
             f.write(f"  mAP@50:95 : {r['mAP50_95']:.4f}\n")
             f.write(f"  Precision : {r['precision']:.4f}\n")
             f.write(f"  Recall    : {r['recall']:.4f}\n\n")
+            f.write(f"  Accuracy  : {r['accuracy']:.4f}\n\n")
 
         # summary table
         f.write("-" * 70 + "\n")
-        header = f"{'Model':<8} {'Experiment':<35} {'mAP50':>7} {'mAP50:95':>9} {'Prec':>7} {'Rec':>7}"
+        header = f"{'Model':<8} {'Experiment':<35} {'mAP50':>7} {'mAP50:95':>9} {'Prec':>7} {'Rec':>7} {'Acc':>7}"
         f.write(header + "\n")
         f.write("-" * 70 + "\n")
         for r in all_results:
@@ -545,11 +599,20 @@ def save_results(all_results):
                 f"{r['mAP50']:>7.4f} "
                 f"{r['mAP50_95']:>9.4f} "
                 f"{r['precision']:>7.4f} "
-                f"{r['recall']:>7.4f}\n"
+                f"{r['recall']:>7.4f} "
+                f"{r['accuracy']:>7.4f}\n"
             )
         f.write("-" * 70 + "\n")
 
     print(f"\n✓ Results saved to {RESULTS_FILE}")
+
+
+def _detection_accuracy(precision, recall):
+    """Detection accuracy proxy: TP / (TP + FP + FN), derived from precision and recall."""
+    denom = (1.0 / max(precision, 1e-9)) + (1.0 / max(recall, 1e-9)) - 1.0
+    if denom <= 0:
+        return 0.0
+    return float(1.0 / denom)
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
@@ -568,17 +631,17 @@ if __name__ == "__main__":
     # print("\n\n" + "=" * 70)
     # print("  YOLO Experiments")
     # print("=" * 70)
-
+# 
     # for exp in EXPERIMENTS:
-    #     name = exp["name"]
-    #     data = exp_data[name]
-    #     metrics = run_yolo_experiment(name, data["yaml"])
-    #     all_results.append({
-    #         "model":     "yolo",
-    #         "exp_name":  name,
-    #         **metrics,
-    #     })
-    #     save_results(all_results)
+        # name = exp["name"]
+        # data = exp_data[name]
+        # metrics = run_yolo_experiment(name, data["yaml"])
+        # all_results.append({
+            # "model":     "yolo",
+            # "exp_name":  name,
+            # **metrics,
+        # })
+        # save_results(all_results)
 
     # ── Step 3: DETR experiments ─────────────────────────────────────────────
     print("\n\n" + "=" * 70)
