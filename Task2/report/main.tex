@@ -1,0 +1,281 @@
+\documentclass[conference, 10pt]{IEEEtran}
+
+% ─── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{float}
+
+\graphicspath{{figures/}}
+
+% ─── Title ─────────────────────────────────────────────────────────────────────
+\title{\LARGE Computer Vision -- Tasks 2-3:\\Ball Counting, Ball Detection and Table Retrieval\\with Deep Learning}
+
+\author{
+  \IEEEauthorblockN{João Proença, Joana Pimenta, Ricardo Ribeiro}
+  \IEEEauthorblockA{M.IA | FEUP, 2025/2026}
+}
+
+\begin{document}
+\maketitle
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% INTRODUCTION
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\section{Introduction}
+
+This report presents three tasks related to pool ball analysis using deep learning techniques.
+Task~2 addresses pool ball counting through CNN regression, Task~3a tackles pool ball detection, and Task~3b explores table retrieval, finding the most similar pool table configuration to a given query image.
+Each task explores different computer vision paradigms, from image-level counting to object-level detection and content-based image retrieval.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% TASK 2 — POOL BALL COUNTING
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\section{Task 2: Pool Ball Counting via CNN Regression}
+
+\subsection{Problem Formulation}
+
+Given an image of a pool table, the goal is to predict the number of balls visible on the table.
+We formulate this as a \textbf{regression problem}, where a CNN backbone extracts visual features and a fully connected head outputs a single continuous value representing the ball count.
+
+\subsection{Dataset}
+
+We aggregate four COCO-format pool ball datasets sourced from Roboflow Universe:
+(1)~\textit{8-Ball Pool}~\cite{ds_8ballpool},
+(2)~\textit{Pool Billiard}~\cite{ds_poolbilliard},
+(3)~\textit{Pool Balls Detection}~\cite{ds_poolballsdetection}, and
+(4)~\textit{Pool Ball Detection}~\cite{ds_poolballdetection}.
+
+The \textbf{test set} (20\%) is drawn exclusively from the original dataset to evaluate generalization.
+The remaining data from all datasets is split 80/20 into train/val sets.
+To mitigate domain shift from the auxiliary datasets, we \textbf{oversample} the original dataset by 4$\times$ in the training pool.
+
+\textbf{Data augmentation} includes random crop, horizontal/vertical flips, 360° rotation, perspective distortion, color jitter, random grayscale, and Gaussian blur.
+
+\subsection{Model Architecture}
+
+We evaluate five pretrained backbones, each modified for single-value regression output by replacing the classification head with a dropout layer ($p=0.3$) followed by a linear layer mapping to a single neuron:
+
+\begin{itemize}
+  \item \textbf{ResNet-18}~\cite{he2016resnet}
+  \item \textbf{EfficientNet-B0}~\cite{tan2019efficientnet}
+  \item \textbf{VGG-16}~\cite{simonyan2015vgg}
+  \item \textbf{Inception v3}~\cite{szegedy2016inception}
+  \item \textbf{MobileNet v3}~\cite{howard2019mobilenet}
+\end{itemize}
+
+\subsection{Training Setup}
+
+All models are trained for 100 epochs using Adam~\cite{kingma2015adam} ($\text{lr}=10^{-4}$, weight decay~$=10^{-4}$) with the Huber loss~\cite{huber1964robust}.
+A \texttt{ReduceLROnPlateau} scheduler (patience=5, factor=0.5) adapts the learning rate.
+The best model is selected based on validation loss.
+Input images are resized to $224 \times 224$ (or $299 \times 299$ for Inception~v3).
+
+\subsection{Results}
+
+Table~\ref{tab:task2_results} summarizes the test set performance across all backbones.
+
+\begin{table}[h]
+\centering
+\caption{Task 2 — Test set results across backbones.}
+\label{tab:task2_results}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Backbone} & \textbf{MAE}$\downarrow$ & \textbf{MSE}$\downarrow$ & \textbf{RMSE}$\downarrow$ & \textbf{Acc}$\uparrow$ \\
+\midrule
+ResNet-18       & 0.863 & 1.389 & 1.178 & 40.8\% \\
+EfficientNet-B0 & 0.721 & 0.862 & 0.928 & 40.8\% \\
+VGG-16          & 0.697 & \textbf{0.783} & \textbf{0.885} & 42.9\% \\
+\textbf{Inception v3} & \textbf{0.641} & 0.799 & 0.894 & \textbf{49.0\%} \\
+MobileNet v3    & 0.940 & 1.599 & 1.264 & 30.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Inception v3} achieves the best test MAE (0.641) and accuracy (49.0\%), while VGG-16 obtains the lowest MSE (0.783) and RMSE (0.885), indicating fewer large prediction errors.
+MobileNet~v3 underperforms across all metrics (MAE 0.940, MSE 1.599, RMSE 1.264, Acc 30.6\%), suggesting its architecture may not capture the fine-grained spatial cues needed for counting.
+
+Table~\ref{tab:task2_full} shows the results when evaluating on the full original dataset (247 images).
+
+\begin{table}[h]
+\centering
+\caption{Task 2 — Full original dataset evaluation.}
+\label{tab:task2_full}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Backbone} & \textbf{MAE}$\downarrow$ & \textbf{MSE}$\downarrow$ & \textbf{RMSE}$\downarrow$ & \textbf{Acc}$\uparrow$ \\
+\midrule
+ResNet-18       & 0.522 & 0.616 & 0.785 & 63.2\% \\
+EfficientNet-B0 & 0.464 & 0.423 & 0.651 & \textbf{66.4\%} \\
+\textbf{VGG-16} & \textbf{0.444} & \textbf{0.348} & \textbf{0.590} & 65.6\% \\
+Inception v3    & 0.748 & 1.336 & 1.156 & 47.8\% \\
+MobileNet v3    & 0.630 & 0.730 & 0.855 & 49.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On the full dataset, VGG-16 dominates with the best MAE (0.444), MSE (0.348), and RMSE (0.590), while EfficientNet-B0 achieves the highest accuracy (66.4\%).
+Notably, Inception~v3 ranks first on the test split but drops to fourth on the full dataset (MAE 0.748, MSE 1.336), suggesting it generalizes well to unseen data but memorizes less of the training distribution.
+The significant gap between test-only and full-dataset metrics across all backbones (e.g., VGG-16 MAE drops from 0.697 to 0.444) indicates some degree of overfitting.
+Training convergence curves for all backbones are provided in Appendix~\ref{app:training_curves}.
+
+\subsection{GradCAM Analysis}
+
+To understand \textit{where} the models focus when counting balls, we apply Grad-CAM~\cite{selvaraju2017gradcam} to the last convolutional layer of VGG-16 and Inception~v3.
+Representative visualizations are provided in Appendix~\ref{app:gradcam}.
+The heatmaps reveal that both models attend primarily to the ball regions on the table, with VGG-16 producing broader activation maps and Inception~v3 generating more focused, ball-specific activations.
+On failure cases, the models tend to focus on table edges or occluded regions.
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% TASK 3a — DETECTION
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\section{Task 3a: Pool Ball Detection}
+
+% TODO: Fill in Task 3a content here
+\textit{[To be completed — Pool ball detection task.]}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% TASK 3b — Table Retrieval
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\section{Task 3b: Table Retrieval}
+
+% TODO: Fill in Task 3b content here
+\textit{[To be completed — Table Retrieval.]}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% CONCLUSION
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\section{Conclusion}
+
+% TODO: Write overall conclusion covering all tasks
+\textit{[To be completed after all tasks are written.]}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% REFERENCES
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+% APPENDIX
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\appendices
+
+\section{Training Curves}
+\label{app:training_curves}
+
+Figures~\ref{fig:curve_loss}--\ref{fig:curve_acc} show the validation metrics across all five backbones over 100 training epochs.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{training_curves/comparison_loss.pdf}
+  \caption{Validation Huber loss across all backbones.}
+  \label{fig:curve_loss}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{training_curves/comparison_mae.pdf}
+  \caption{Validation MAE across all backbones.}
+  \label{fig:curve_mae}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{training_curves/comparison_mse.pdf}
+  \caption{Validation MSE across all backbones.}
+  \label{fig:curve_mse}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{training_curves/comparison_rmse.pdf}
+  \caption{Validation RMSE across all backbones.}
+  \label{fig:curve_rmse}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{training_curves/comparison_acc.pdf}
+  \caption{Validation accuracy across all backbones.}
+  \label{fig:curve_acc}
+\end{figure}
+
+\section{GradCAM Visualizations}
+\label{app:gradcam}
+
+Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heatmaps for VGG-16 and Inception~v3 respectively on test set images. Each pair displays the original image (left) and the GradCAM overlay (right), with ground truth and predicted ball counts annotated.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_00.png}
+    \caption{GT: 2, Pred: 2 — correct prediction}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_01.png}
+    \caption{GT: 5, Pred: 5 — correct prediction}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_02.png}
+    \caption{GT: 6, Pred: 8 — failure case}
+  \end{subfigure}
+
+  \caption{VGG-16 Grad-CAM visualizations on test images.}
+  \label{fig:gradcam_vgg}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=0.95\columnwidth]{gradcam/inception_v3_00.png}
+    \caption{GT: 2, Pred: 2 — correct prediction}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=0.95\columnwidth]{gradcam/inception_v3_01.png}
+    \caption{GT: 5, Pred: 5 — correct prediction}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=0.95\columnwidth]{gradcam/inception_v3_02.png}
+    \caption{GT: 6, Pred: 8 — failure case}
+  \end{subfigure}
+
+  \caption{Inception v3 Grad-CAM visualizations on test images.}
+  \label{fig:gradcam_inception}
+\end{figure}
+
+\end{document}

@@ -6,6 +6,7 @@ Splits loaded from dataset.json (produced by prepare_dataset.py)
 """
 
 import os
+import csv
 import json
 import random
 import numpy as np
@@ -232,9 +233,22 @@ def run_training(backbone):
     best_val_loss = float("inf")
     best_epoch    = 0
 
+    # CSV logging for training curves
+    csv_path = os.path.join(MODELS_DIR, f"{backbone}_training_log.csv")
+    csv_file = open(csv_path, "w", newline="")
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(["epoch", "train_loss", "train_mae", "train_mse", "train_rmse", "train_acc",
+                         "val_loss", "val_mae", "val_mse", "val_rmse", "val_acc"])
+
     for epoch in range(1, NUM_EPOCHS + 1):
         train_loss, train_mae, train_mse, train_rmse, train_acc = train(model, train_loader, optimizer, criterion, backbone)
         val_loss, val_mae, val_mse, val_rmse, val_acc           = evaluate(model, val_loader, criterion)
+
+        # Log to CSV
+        csv_writer.writerow([epoch, f"{train_loss:.6f}", f"{train_mae:.6f}", f"{train_mse:.6f}",
+                             f"{train_rmse:.6f}", f"{train_acc:.6f}", f"{val_loss:.6f}",
+                             f"{val_mae:.6f}", f"{val_mse:.6f}", f"{val_rmse:.6f}", f"{val_acc:.6f}"])
+        csv_file.flush()
 
         lr_before = optimizer.param_groups[0]["lr"]
         scheduler.step(val_loss)
@@ -254,6 +268,8 @@ def run_training(backbone):
             torch.save(model.state_dict(), model_path)
             print(f"  ✓ saved {model_path} (epoch {epoch})")
 
+    csv_file.close()
+    print(f"  ✓ Training log saved to {csv_path}")
     print(f"\nBest model: epoch {best_epoch} | val_loss: {best_val_loss:.4f}")
 
     model.load_state_dict(torch.load(model_path, map_location=DEVICE))
