@@ -624,20 +624,20 @@ if __name__ == "__main__":
     all_results = []
 
     # ── Step 2: YOLO experiments ─────────────────────────────────────────────
-    # print("\n\n" + "=" * 70)
-    # print("  YOLO Experiments")
-    # print("=" * 70)
-# 
-    # for exp in EXPERIMENTS:
-        # name = exp["name"]
-        # data = exp_data[name]
-        # metrics = run_yolo_experiment(name, data["yaml"])
-        # all_results.append({
-            # "model":     "yolo",
-            # "exp_name":  name,
-            # **metrics,
-        # })
-        # save_results(all_results)
+    print("\n\n" + "=" * 70)
+    print("  YOLO Experiments")
+    print("=" * 70)
+
+    for exp in EXPERIMENTS:
+        name = exp["name"]
+        data = exp_data[name]
+        metrics = run_yolo_experiment(name, data["yaml"])
+        all_results.append({
+            "model":     "yolo",
+            "exp_name":  name,
+            **metrics,
+        })
+        save_results(all_results)
 
     # ── Step 3: DETR experiments ─────────────────────────────────────────────
     print("\n\n" + "=" * 70)
