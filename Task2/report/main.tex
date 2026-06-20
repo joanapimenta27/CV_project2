@@ -95,21 +95,22 @@ Table~\ref{tab:task2_results} summarizes the test set performance across all bac
 \midrule
 ResNet-18       & 0.863 & 1.389 & 1.178 & 40.8\% \\
 EfficientNet-B0 & 0.721 & 0.862 & 0.928 & 40.8\% \\
-VGG-16          & 0.697 & \textbf{0.783} & \textbf{0.885} & 42.9\% \\
-\textbf{Inception v3} & \textbf{0.641} & 0.799 & 0.894 & \textbf{49.0\%} \\
+VGG-16          & 0.697 & 0.783 & 0.885 & 42.9\% \\
+\textbf{Inception v3} & \textbf{0.627} & \textbf{0.676} & \textbf{0.822} & \textbf{53.1\%} \\
 MobileNet v3    & 0.940 & 1.599 & 1.264 & 30.6\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Inception v3} achieves the best test MAE (0.641) and accuracy (49.0\%), while VGG-16 obtains the lowest MSE (0.783) and RMSE (0.885), indicating fewer large prediction errors.
+\textbf{Inception v3} achieves the best test performance across all four metrics: lowest MAE (0.627), MSE (0.676), RMSE (0.822), and highest accuracy (53.1\%).
+VGG-16 follows as a close second (MAE 0.697, MSE 0.783).
 MobileNet~v3 underperforms across all metrics (MAE 0.940, MSE 1.599, RMSE 1.264, Acc 30.6\%), suggesting its architecture may not capture the fine-grained spatial cues needed for counting.
 
 Table~\ref{tab:task2_full} shows the results when evaluating on the full original dataset (247 images).
 
 \begin{table}[h]
 \centering
-\caption{Task 2 — Full original dataset evaluation.}
+\caption{Task 2 — Full original dataset evaluation (247 images).}
 \label{tab:task2_full}
 \begin{tabular}{lcccc}
 \toprule
@@ -118,15 +119,15 @@ Table~\ref{tab:task2_full} shows the results when evaluating on the full origina
 ResNet-18       & 0.522 & 0.616 & 0.785 & 63.2\% \\
 EfficientNet-B0 & 0.464 & 0.423 & 0.651 & \textbf{66.4\%} \\
 \textbf{VGG-16} & \textbf{0.444} & \textbf{0.348} & \textbf{0.590} & 65.6\% \\
-Inception v3    & 0.748 & 1.336 & 1.156 & 47.8\% \\
+Inception v3    & 1.077 & 2.558 & 1.599 & 30.4\% \\
 MobileNet v3    & 0.630 & 0.730 & 0.855 & 49.8\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 On the full dataset, VGG-16 dominates with the best MAE (0.444), MSE (0.348), and RMSE (0.590), while EfficientNet-B0 achieves the highest accuracy (66.4\%).
-Notably, Inception~v3 ranks first on the test split but drops to fourth on the full dataset (MAE 0.748, MSE 1.336), suggesting it generalizes well to unseen data but memorizes less of the training distribution.
-The significant gap between test-only and full-dataset metrics across all backbones (e.g., VGG-16 MAE drops from 0.697 to 0.444) indicates some degree of overfitting.
+Strikingly, Inception~v3 ranks first on the test split but drops to last on the full dataset (MAE 1.077, MSE 2.558, Acc 30.4\%), revealing that it generalizes well to unseen test images but severely overfits to the training distribution.
+The contrasting behavior between VGG-16 (consistently strong) and Inception~v3 (excellent generalization, poor memorization) highlights the trade-off between model complexity and generalization in small-dataset regimes.
 Training convergence curves for all backbones are provided in Appendix~\ref{app:training_curves}.
 
 \subsection{GradCAM Analysis}
@@ -220,14 +221,15 @@ Figures~\ref{fig:curve_loss}--\ref{fig:curve_acc} show the validation metrics ac
 \section{GradCAM Visualizations}
 \label{app:gradcam}
 
-Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heatmaps for VGG-16 and Inception~v3 respectively on test set images. Each pair displays the original image (left) and the GradCAM overlay (right), with ground truth and predicted ball counts annotated.
+Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heatmaps for VGG-16 and Inception~v3 on three test set images each.
+Each pair displays the original image (left) and the GradCAM overlay (right); ground truth and predicted ball counts are annotated in the image title.
 
 \begin{figure}[H]
   \centering
   \begin{subfigure}[b]{\columnwidth}
     \centering
     \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_00.png}
-    \caption{GT: 2, Pred: 2 — correct prediction}
+    \caption{Sample 1.}
   \end{subfigure}
 
   \vspace{0.3em}
@@ -235,7 +237,7 @@ Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heat
   \begin{subfigure}[b]{\columnwidth}
     \centering
     \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_01.png}
-    \caption{GT: 5, Pred: 5 — correct prediction}
+    \caption{Sample 2.}
   \end{subfigure}
 
   \vspace{0.3em}
@@ -243,10 +245,10 @@ Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heat
   \begin{subfigure}[b]{\columnwidth}
     \centering
     \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_02.png}
-    \caption{GT: 6, Pred: 8 — failure case}
+    \caption{Sample 3.}
   \end{subfigure}
 
-  \caption{VGG-16 Grad-CAM visualizations on test images.}
+  \caption{VGG-16 Grad-CAM visualizations on original test set images.}
   \label{fig:gradcam_vgg}
 \end{figure}
 
@@ -255,7 +257,7 @@ Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heat
   \begin{subfigure}[b]{\columnwidth}
     \centering
     \includegraphics[width=0.95\columnwidth]{gradcam/inception_v3_00.png}
-    \caption{GT: 2, Pred: 2 — correct prediction}
+    \caption{Sample 1.}
   \end{subfigure}
 
   \vspace{0.3em}
@@ -263,7 +265,7 @@ Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heat
   \begin{subfigure}[b]{\columnwidth}
     \centering
     \includegraphics[width=0.95\columnwidth]{gradcam/inception_v3_01.png}
-    \caption{GT: 5, Pred: 5 — correct prediction}
+    \caption{Sample 2.}
   \end{subfigure}
 
   \vspace{0.3em}
@@ -271,10 +273,10 @@ Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heat
   \begin{subfigure}[b]{\columnwidth}
     \centering
     \includegraphics[width=0.95\columnwidth]{gradcam/inception_v3_02.png}
-    \caption{GT: 6, Pred: 8 — failure case}
+    \caption{Sample 3.}
   \end{subfigure}
 
-  \caption{Inception v3 Grad-CAM visualizations on test images.}
+  \caption{Inception v3 Grad-CAM visualizations on original test set images.}
   \label{fig:gradcam_inception}
 \end{figure}
 
