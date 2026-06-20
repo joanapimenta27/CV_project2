@@ -34,7 +34,7 @@ RUNS_DIR      = TASK_DIR / "runs"
 
 SEED          = 42
 YOLO_EPOCHS   = 50
-DETR_EPOCHS   = 50
+DETR_EPOCHS   = 100
 BATCH_SIZE    = 8
 LR_DETR       = 1e-5
 WEIGHT_DECAY  = 1e-4
@@ -110,29 +110,18 @@ class DetectionDataset(Dataset):
 
 def make_detr_collate_fn(processor):
     """
-    Returns a collate function that processes each PIL image individually
-    (resize + normalise), then zero-pads all tensors to the batch maximum
-    height/width so they can be stacked. 
+    Returns a collate function that lets the DETR processor pad the batch to
+    the largest height/width and build the matching pixel_mask, so the model
+    can ignore the padded borders during attention and positional encoding.
     """
     def collate_fn(batch):
         images  = [item[0] for item in batch]
         targets = [item[1] for item in batch]
 
-        # process each image independently → list of [3, H_i, W_i] tensors
-        tensors = [
-            processor(images=img, return_tensors="pt")["pixel_values"].squeeze(0)
-            for img in images
-        ]
+        # processor pads to the batch max and produces the pixel_mask
+        encoding = processor(images=images, return_tensors="pt")
 
-        # pad to the largest H and W in this batch
-        max_h = max(t.shape[1] for t in tensors)
-        max_w = max(t.shape[2] for t in tensors)
-        pixel_values = torch.zeros(len(tensors), 3, max_h, max_w,
-                                   dtype=tensors[0].dtype)
-        for i, t in enumerate(tensors):
-            pixel_values[i, :, :t.shape[1], :t.shape[2]] = t
-
-        return pixel_values, targets
+        return encoding["pixel_values"], encoding["pixel_mask"], targets
     return collate_fn
 
 
@@ -183,9 +172,10 @@ def compute_detr_map(model, loader, iou_thresholds=None):
     all_gt_boxes   = []  # list of [M,4] tensors per image (xyxy, normalised)
     all_gt_labels  = []  # list of 1D tensors per image (gt class id)
 
-    for pixel_values, targets in loader:
+    for pixel_values, pixel_mask, targets in loader:
         pixel_values = pixel_values.to(DEVICE)
-        outputs = model(pixel_values=pixel_values)
+        pixel_mask   = pixel_mask.to(DEVICE)
+        outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask)
 
         # DETR logits: [B, num_queries, num_classes+1]
         # DETR boxes:  [B, num_queries, 4] (cx, cy, w, h, normalised)
@@ -365,8 +355,9 @@ def _pr_at_iou(all_scores, all_boxes, all_gt, iou_thr):
 def train_detr_epoch(model, loader, optimizer):
     model.train()
     total_loss = 0.0
-    for pixel_values, targets in loader:
+    for pixel_values, pixel_mask, targets in loader:
         pixel_values = pixel_values.to(DEVICE)
+        pixel_mask   = pixel_mask.to(DEVICE)
 
         # DETR expects labels as list of dicts with keys
         # "class_labels" (LongTensor) and "boxes" (FloatTensor cx,cy,w,h)
@@ -379,7 +370,7 @@ def train_detr_epoch(model, loader, optimizer):
         ]
 
         optimizer.zero_grad()
-        outputs = model(pixel_values=pixel_values, labels=hf_targets)
+        outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask, labels=hf_targets)
         loss    = outputs.loss
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.1)
@@ -435,6 +426,11 @@ def run_detr_experiment(exp_name, train_s, val_s, test_s):
             num_labels=NUM_CLASSES,
             ignore_mismatched_sizes=True,
         ).to(DEVICE)
+
+        print(model.config.num_labels)              # expect 4
+        print(model.class_labels_classifier)         # Linear(in=256, out=5)
+        print(len(model.config.id2label)) 
+        print(model.config.id2label)
         model.load_state_dict(torch.load(model_save, map_location=DEVICE))
         metrics = compute_detr_map(model, test_loader)
         _print_detr_metrics(metrics, exp_name)
