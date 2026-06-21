@@ -33,7 +33,7 @@ N_WRONG      = 1
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-BACKBONES_TO_VIS = ["vgg16", "inception_v3"]
+BACKBONES_TO_VIS = ["inception_v3"]
 
 random.seed(SEED)
 np.random.seed(SEED)

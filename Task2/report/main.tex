@@ -107,23 +107,20 @@ Table~\ref{tab:task2_full} shows evaluation on the full original dataset, which 
 \textbf{Backbone} & \textbf{MAE}$\downarrow$ & \textbf{MSE}$\downarrow$ & \textbf{RMSE}$\downarrow$ & \textbf{Acc}$\uparrow$ \\
 \midrule
 ResNet-18             & 0.522 & 0.616 & 0.785 & 63.2\% \\
-EfficientNet-B0       & 0.464 & 0.423 & 0.651 & \textbf{66.4\%} \\
-\textbf{VGG-16}       & \textbf{0.444} & \textbf{0.348} & \textbf{0.590} & 65.6\% \\
-Inception v3          & 1.077 & 2.558 & 1.599 & 30.4\% \\
+EfficientNet-B0       & 0.464 & 0.423 & 0.651 & 66.4\% \\
+VGG-16                & 0.444 & 0.348 & 0.590 & 65.6\% \\
+\textbf{Inception v3} & \textbf{0.297} & \textbf{0.195} & \textbf{0.442} & \textbf{82.6\%} \\
 MobileNet v3          & 0.630 & 0.730 & 0.855 & 49.8\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Here VGG-16 dominates on error metrics and EfficientNet-B0 achieves the highest accuracy.
-Notably, Inception~v3 drops to last place , strong test performance paired with weak in-distribution results suggests training instability rather than overfitting, possibly exacerbated by the 4$\times$ oversampling strategy.
+Inception~v3 again leads across all metrics on the full original dataset, achieving 82.6\% accuracy and the lowest MAE (0.297), confirming that its strong test-set performance generalises well to the broader in-domain distribution.
+VGG-16 and EfficientNet-B0 follow closely, while MobileNet~v3 remains the weakest.
 Training convergence curves are provided in Appendix~\ref{app:training_curves}.
 
 \subsection{Grad-CAM Analysis}
-We apply Grad-CAM~\cite{selvaraju2017gradcam} to the final convolutional layer of VGG-16 and Inception~v3 to interpret model focus during counting.
-Representative heatmaps are provided in Appendix~\ref{app:gradcam}.
-Both models attend primarily to ball regions, though VGG-16 produces broader activations while Inception~v3 yields more localised, ball-specific responses.
-On failure cases, attention shifts to table edges or occluded areas.
+To understand where the model focuses during counting, we apply Grad-CAM~\cite{selvaraju2017gradcam} to the final convolutional layer of Inception~v3. Visualizations in Appendix~\ref{app:gradcam} show broad activations over the table surface, consistent with global spatial aggregation. In failure cases, activation spreads toward table edges, suggesting confusion with non-ball features
 
 
 % ═══════════════════════════════════════════════════════════════════════════════
@@ -289,36 +286,8 @@ Figures~\ref{fig:curve_loss}--\ref{fig:curve_acc} show the validation metrics ac
 \section{GradCAM Visualizations}
 \label{app:gradcam}
 
-Figures~\ref{fig:gradcam_vgg} and~\ref{fig:gradcam_inception} show Grad-CAM heatmaps for VGG-16 and Inception~v3 on three test set images each.
+Figure~\ref{fig:gradcam_inception} shows Grad-CAM heatmaps for Inception~v3 on three test set images (two correct predictions and one incorrect).
 Each pair displays the original image (left) and the GradCAM overlay (right); ground truth and predicted ball counts are annotated in the image title.
-
-\begin{figure}[H]
-  \centering
-  \begin{subfigure}[b]{\columnwidth}
-    \centering
-    \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_00.png}
-    \caption{Sample 1.}
-  \end{subfigure}
-
-  \vspace{0.3em}
-
-  \begin{subfigure}[b]{\columnwidth}
-    \centering
-    \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_01.png}
-    \caption{Sample 2.}
-  \end{subfigure}
-
-  \vspace{0.3em}
-
-  \begin{subfigure}[b]{\columnwidth}
-    \centering
-    \includegraphics[width=0.95\columnwidth]{gradcam/vgg16_02.png}
-    \caption{Sample 3.}
-  \end{subfigure}
-
-  \caption{VGG-16 Grad-CAM visualizations on original test set images.}
-  \label{fig:gradcam_vgg}
-\end{figure}
 
 \begin{figure}[H]
   \centering
