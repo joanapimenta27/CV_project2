@@ -151,15 +151,10 @@ We treat this as an \textbf{object detection problem} over a unified 4-class tax
 
 \subsection{Dataset}
 
-We reuse the same four Roboflow COCO datasets as Task~2~\cite{ds_8ballpool,ds_poolbilliard,ds_poolballsdetection,ds_poolballdetection}, remapping each source's native category names onto the shared 4-class taxonomy.
-Because the auxiliary datasets use heterogeneous labelling conventions, the mapping follows the standard 8-ball convention: cue ball $\rightarrow$ \textit{Cue}, balls 1--7 $\rightarrow$ \textit{Solid}, ball 8 $\rightarrow$ \textit{Black}, and balls 9--15 $\rightarrow$ \textit{Striped}.
-Ambiguous categories (e.g.\ generic \textit{Object\_Ball}, or the blue/yellow balls of the v5 variant that have no solid/striped equivalent) are dropped.
+We reuse the same four Roboflow COCO datasets as Task~2~\cite{ds_8ballpool,ds_poolbilliard,ds_poolballsdetection,ds_poolballdetection}, remapping each source's native categories onto the shared 4-class taxonomy following the standard 8-ball convention: cue ball $\rightarrow$ \textit{Cue}, balls 1--7 $\rightarrow$ \textit{Solid}, ball 8 $\rightarrow$ \textit{Black}, balls 9--15 $\rightarrow$ \textit{Striped}; ambiguous categories (e.g.\ generic \textit{Object\_Ball}) are dropped.
+A domain analysis reveals substantial covariate shift across sources (resolutions from $416\times416$ to $2200\times1295$, mean brightness 0.27--0.54, mean relative bbox area spanning an order of magnitude), motivating a controlled, progressive evaluation of how much auxiliary data helps.
 
-A domain analysis of the four sources reveals substantial covariate shift: image resolutions range from $416\times416$ to over $2200\times1295$, mean brightness varies from 0.27 (\textit{Pool Ball Detection}) to 0.54 (\textit{Pool Balls Detection}), and mean relative bounding-box area spans an order of magnitude (0.00028 for the original set vs.\ 0.0027 for v13).
-This heterogeneity motivates a controlled, progressive evaluation of how much auxiliary data helps.
-
-\textbf{Split strategy.} The \textbf{test set} is fixed across all experiments: 20\% of the original dataset only (the original set has 247 images), held out so that every model is evaluated on the same in-domain distribution.
-Each experiment then splits its data pool 80/20 into train/val.
+\textbf{Split strategy.} The \textbf{test set} is fixed across all experiments: 20\% of the original dataset only (247 images), held out so every model is evaluated on the same in-domain distribution. Each experiment then splits its data pool 80/20 into train/val.
 
 \subsection{Progressive Data Experiments}
 
@@ -182,14 +177,12 @@ We finetune three detectors with complementary inductive biases:
   \item \textbf{Deformable DETR}~\cite{zhu2021deformabledetr} (\texttt{SenseTime/deformable-detr}): a sparse multi-scale deformable-attention variant using a sigmoid focal-loss head.
 \end{itemize}
 
-Both DETR-family models are finetuned for 100 epochs with the ResNet-50 backbone frozen, AdamW ($\text{lr}=10^{-5}$, weight decay $10^{-4}$), a cosine-annealing schedule, batch size~1, and inputs resized to a shortest edge of 800.
-The best checkpoint is selected on validation mAP@50.
-Due to its restrictive computational cost, \textbf{Deformable DETR was only run for exp1 and exp2}; the exp3 and exp4 sweeps were not conducted because the available computational power was insufficient to train them in a reasonable time.
+Both DETR-family models are finetuned for 100 epochs with the ResNet-50 backbone frozen, AdamW ($\text{lr}=10^{-5}$, weight decay $10^{-4}$), a cosine schedule, batch size~1, and inputs resized to a shortest edge of 800; the best checkpoint is selected on validation mAP@50.
+Due to its restrictive computational cost, \textbf{Deformable DETR was only run for exp1 and exp2}.
 
 \subsection{Evaluation Metrics}
 
 We report \textbf{mAP@50}, \textbf{mAP@50:95}, \textbf{Precision}, and \textbf{Recall} (averaged over the four classes).
-We additionally report a \textbf{detection accuracy} proxy, $\text{Acc} = \text{TP}/(\text{TP}+\text{FP}+\text{FN})$, derived from precision and recall, which jointly penalizes both false positives and missed detections.
 
 \subsection{Results}
 
@@ -223,28 +216,16 @@ Table~\ref{tab:task3a_results} reports the test-set performance of all model/exp
 \end{tabular}
 \end{table}
 
-\textbf{YOLOv8n} is the clear winner and the only model that benefits monotonically from added data: mAP@50 climbs from 0.490 (exp1) to 0.872 (exp4), with precision improving from 0.424 to 0.852.
-The largest jump comes from adding Pool Billiard (exp1$\rightarrow$exp2, $+0.29$ mAP@50), with the remaining datasets giving smaller but consistent gains.
-This confirms that, despite the domain shift, the auxiliary data provides useful regularization for the CNN detector.
+\textbf{YOLOv8n} is the clear winner and the only model that benefits monotonically from added data: mAP@50 climbs from 0.490 (exp1) to 0.872 (exp4), the largest jump coming from Pool Billiard (exp1$\rightarrow$exp2, $+0.29$). Despite the domain shift, the auxiliary data acts as useful regularization for the CNN detector.
+\textbf{Deformable DETR} also responds strongly, jumping from 0.229 to 0.626 mAP@50 between exp1 and exp2 and reaching a precision (0.789) competitive with YOLOv8n; its steep trajectory suggests further gains with exp3/exp4 data, left unexplored due to compute.
+\textbf{Vanilla DETR} fails to converge in this low-data, small-object regime (mAP@50 $<0.08$ throughout, no benefit from added data), consistent with DETR's known need for long schedules and large datasets, compounded here by tiny ball sizes and a frozen backbone. Deformable DETR's multi-scale attention mitigates exactly these issues, explaining the large gap between the two transformers.
 
-\textbf{Deformable DETR} also responds strongly to additional data, jumping from 0.229 to 0.626 mAP@50 between exp1 and exp2, and reaching a precision (0.789) competitive with YOLOv8n.
-Its steep exp1$\rightarrow$exp2 trajectory suggests it would likely keep improving with the exp3/exp4 data, but its restrictive training cost made the full sweep impractical under our compute budget.
-
-\textbf{Vanilla DETR} fails to converge usefully in this low-data, small-object regime: mAP@50 stays below 0.08 across all experiments, and --- unlike the other two models --- adding data does not help (it even degrades slightly).
-We attribute this to DETR's well-documented need for long training schedules and large datasets, compounded here by small ball sizes (relative bbox areas as low as $3\times10^{-4}$) and a frozen backbone.
-The deformable multi-scale attention of Deformable DETR mitigates exactly these small-object and convergence issues, explaining the large gap between the two transformer detectors.
-
-\textbf{Takeaway.} Under this task's data and compute budget, a lightweight pretrained CNN detector (YOLOv8n) substantially outperforms the transformer detectors, and progressively incorporating heterogeneous auxiliary data yields the best overall result (mAP@50 $=0.872$).
-It should be noted that we use YOLOv8 rather than the most recent YOLO releases, so an even stronger CNN baseline is likely attainable.
-Given the steep improvement of Deformable DETR from exp1 to exp2, with more computational power --- enabling the full exp3/exp4 sweeps and longer training schedules --- Deformable DETR could potentially match or even outperform YOLO.
-Nevertheless, YOLOv8n remains the best cost/performance trade-off here, delivering the strongest accuracy at a fraction of the training cost.
+\textbf{Takeaway.} Under this data and compute budget, a lightweight pretrained CNN detector (YOLOv8n) substantially outperforms the transformers, and progressively adding heterogeneous auxiliary data yields the best result (mAP@50 $=0.872$). We use YOLOv8 rather than the latest YOLO releases, so an even stronger CNN baseline is likely attainable. With more compute, Deformable DETR could potentially close the gap, but YOLOv8n remains the best cost/performance trade-off here.
 
 \subsection{Qualitative Comparison}
 
-To inspect \textit{where} the two best detectors disagree, Figure~\ref{fig:yolo_def_detr} (Appendix~\ref{app:detection_compare}) overlays the predictions of YOLOv8n (exp4) and Deformable DETR (exp2) on the same held-out test images, alongside the ground-truth boxes (green dashed).
-Consistent with the quantitative results, YOLOv8n produces tighter, more complete detections with fewer misses, whereas Deformable DETR tends to miss small or partially occluded balls and is more prone to class confusions (e.g.\ \textit{Solid} vs.\ \textit{Striped}) and the occasional duplicate or low-confidence box.
-In particular, Deformable DETR frequently mislabels the \textit{Cue} ball as \textit{Solid} or \textit{Striped}, and it even fires on the table pockets (holes), producing more detections than there are ground-truth balls (e.g.\ Figure~\ref{fig:yolo_def_detr}, \texttt{compare\_03}).
-The shared samples make the recall gap (0.788 vs.\ 0.624) directly visible in the missed-ball cases.
+Figure~\ref{fig:yolo_def_detr} (Appendix~\ref{app:detection_compare}) overlays YOLOv8n (exp4) and Deformable DETR (exp2) predictions on shared test images against ground truth.
+YOLOv8n produces tighter, more complete detections, whereas Deformable DETR misses small or occluded balls and is more prone to class confusions: it frequently mislabels the \textit{Cue} ball as \textit{Solid}/\textit{Striped} and even fires on table pockets, producing more detections than ground-truth balls (e.g.\ \texttt{compare\_03}). The shared samples make the recall gap (0.788 vs.\ 0.624) directly visible.
 
 % ═══════════════════════════════════════════════════════════════════════════════
 % TASK 3b — Table Retrieval
