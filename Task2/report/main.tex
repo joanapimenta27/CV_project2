@@ -49,18 +49,10 @@ Given an image of a pool table, the goal is to predict the number of balls visib
 We formulate this as a \textbf{regression problem}, where a CNN backbone extracts visual features and a fully connected head outputs a single continuous value representing the ball count.
 
 \subsection{Dataset}
-
-We aggregate four COCO-format pool ball datasets sourced from Roboflow Universe:
-(1)~\textit{8-Ball Pool}~\cite{ds_8ballpool},
-(2)~\textit{Pool Billiard}~\cite{ds_poolbilliard},
-(3)~\textit{Pool Balls Detection}~\cite{ds_poolballsdetection}, and
-(4)~\textit{Pool Ball Detection}~\cite{ds_poolballdetection}.
-
-The \textbf{test set} (20\%) is drawn exclusively from the original dataset to evaluate generalization.
-The remaining data from all datasets is split 80/20 into train/val sets.
-To mitigate domain shift from the auxiliary datasets, we \textbf{oversample} the original dataset by 4$\times$ in the training pool.
-
-\textbf{Data augmentation} includes random crop, horizontal/vertical flips, 360° rotation, perspective distortion, color jitter, random grayscale, and Gaussian blur.
+We aggregate four COCO-format pool ball datasets from Roboflow Universe~\cite{ds_8ballpool, ds_poolbilliard, ds_poolballsdetection, ds_poolballdetection}.
+The test set (20\%) is drawn exclusively from the original dataset; the remainder is split 80/20 into train/val.
+To mitigate domain shift, the original dataset is oversampled 4$\times$ in the training pool.
+Augmentations are applied on-the-fly and include random crop, horizontal/vertical flips, 360° rotation, perspective distortion, color jitter, random grayscale, and Gaussian blur.
 
 \subsection{Model Architecture}
 
@@ -82,8 +74,7 @@ The best model is selected based on validation loss.
 Input images are resized to $224 \times 224$ (or $299 \times 299$ for Inception~v3).
 
 \subsection{Results}
-
-Table~\ref{tab:task2_results} summarizes the test set performance across all backbones.
+Table~\ref{tab:task2_results} summarizes test set performance across all backbones.
 
 \begin{table}[h]
 \centering
@@ -93,49 +84,46 @@ Table~\ref{tab:task2_results} summarizes the test set performance across all bac
 \toprule
 \textbf{Backbone} & \textbf{MAE}$\downarrow$ & \textbf{MSE}$\downarrow$ & \textbf{RMSE}$\downarrow$ & \textbf{Acc}$\uparrow$ \\
 \midrule
-ResNet-18       & 0.863 & 1.389 & 1.178 & 40.8\% \\
-EfficientNet-B0 & 0.721 & 0.862 & 0.928 & 40.8\% \\
-VGG-16          & 0.697 & 0.783 & 0.885 & 42.9\% \\
+ResNet-18             & 0.863 & 1.389 & 1.178 & 40.8\% \\
+EfficientNet-B0       & 0.721 & 0.862 & 0.928 & 40.8\% \\
+VGG-16                & 0.697 & 0.783 & 0.885 & 42.9\% \\
 \textbf{Inception v3} & \textbf{0.627} & \textbf{0.676} & \textbf{0.822} & \textbf{53.1\%} \\
-MobileNet v3    & 0.940 & 1.599 & 1.264 & 30.6\% \\
+MobileNet v3          & 0.940 & 1.599 & 1.264 & 30.6\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Inception v3} achieves the best test performance across all four metrics: lowest MAE (0.627), MSE (0.676), RMSE (0.822), and highest accuracy (53.1\%).
-VGG-16 follows as a close second (MAE 0.697, MSE 0.783).
-MobileNet~v3 underperforms across all metrics (MAE 0.940, MSE 1.599, RMSE 1.264, Acc 30.6\%), suggesting its architecture may not capture the fine-grained spatial cues needed for counting.
+Inception~v3 leads on all four test metrics, with VGG-16 as a close second.
+MobileNet~v3 underperforms across the board, suggesting its lightweight architecture lacks the capacity to capture fine-grained spatial cues for counting.
 
-Table~\ref{tab:task2_full} shows the results when evaluating on the full original dataset (247 images).
+Table~\ref{tab:task2_full} shows evaluation on the full original dataset, which includes training images.
 
 \begin{table}[h]
 \centering
-\caption{Task 2 — Full original dataset evaluation (247 images).}
+\caption{Task 2 — Full original dataset evaluation.}
 \label{tab:task2_full}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Backbone} & \textbf{MAE}$\downarrow$ & \textbf{MSE}$\downarrow$ & \textbf{RMSE}$\downarrow$ & \textbf{Acc}$\uparrow$ \\
 \midrule
-ResNet-18       & 0.522 & 0.616 & 0.785 & 63.2\% \\
-EfficientNet-B0 & 0.464 & 0.423 & 0.651 & \textbf{66.4\%} \\
-\textbf{VGG-16} & \textbf{0.444} & \textbf{0.348} & \textbf{0.590} & 65.6\% \\
-Inception v3    & 1.077 & 2.558 & 1.599 & 30.4\% \\
-MobileNet v3    & 0.630 & 0.730 & 0.855 & 49.8\% \\
+ResNet-18             & 0.522 & 0.616 & 0.785 & 63.2\% \\
+EfficientNet-B0       & 0.464 & 0.423 & 0.651 & \textbf{66.4\%} \\
+\textbf{VGG-16}       & \textbf{0.444} & \textbf{0.348} & \textbf{0.590} & 65.6\% \\
+Inception v3          & 1.077 & 2.558 & 1.599 & 30.4\% \\
+MobileNet v3          & 0.630 & 0.730 & 0.855 & 49.8\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-On the full dataset, VGG-16 dominates with the best MAE (0.444), MSE (0.348), and RMSE (0.590), while EfficientNet-B0 achieves the highest accuracy (66.4\%).
-Strikingly, Inception~v3 ranks first on the test split but drops to last on the full dataset (MAE 1.077, MSE 2.558, Acc 30.4\%), revealing that it generalizes well to unseen test images but severely overfits to the training distribution.
-The contrasting behavior between VGG-16 (consistently strong) and Inception~v3 (excellent generalization, poor memorization) highlights the trade-off between model complexity and generalization in small-dataset regimes.
-Training convergence curves for all backbones are provided in Appendix~\ref{app:training_curves}.
+Here VGG-16 dominates on error metrics and EfficientNet-B0 achieves the highest accuracy.
+Notably, Inception~v3 drops to last place , strong test performance paired with weak in-distribution results suggests training instability rather than overfitting, possibly exacerbated by the 4$\times$ oversampling strategy.
+Training convergence curves are provided in Appendix~\ref{app:training_curves}.
 
-\subsection{GradCAM Analysis}
-
-To understand \textit{where} the models focus when counting balls, we apply Grad-CAM~\cite{selvaraju2017gradcam} to the last convolutional layer of VGG-16 and Inception~v3.
-Representative visualizations are provided in Appendix~\ref{app:gradcam}.
-The heatmaps reveal that both models attend primarily to the ball regions on the table, with VGG-16 producing broader activation maps and Inception~v3 generating more focused, ball-specific activations.
-On failure cases, the models tend to focus on table edges or occluded regions.
+\subsection{Grad-CAM Analysis}
+We apply Grad-CAM~\cite{selvaraju2017gradcam} to the final convolutional layer of VGG-16 and Inception~v3 to interpret model focus during counting.
+Representative heatmaps are provided in Appendix~\ref{app:gradcam}.
+Both models attend primarily to ball regions, though VGG-16 produces broader activations while Inception~v3 yields more localised, ball-specific responses.
+On failure cases, attention shifts to table edges or occluded areas.
 
 
 % ═══════════════════════════════════════════════════════════════════════════════

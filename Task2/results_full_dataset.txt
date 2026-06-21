@@ -25,11 +25,11 @@ Backbone : vgg16
   Acc    : 65.6%
 
 Backbone : inception_v3
-  Loss   : 0.6799
-  MAE    : 1.077
-  MSE    : 2.558
-  RMSE   : 1.599
-  Acc    : 30.4%
+  Loss   : 0.0889
+  MAE    : 0.297
+  MSE    : 0.195
+  RMSE   : 0.442
+  Acc    : 82.6%
 
 Backbone : mobilenet_v3
   Loss   : 0.2952
@@ -44,6 +44,6 @@ Backbone                  MAE      MSE     RMSE      Acc
 resnet18                0.522    0.616    0.785    63.2%
 efficientnet_b0         0.464    0.423    0.651    66.4%
 vgg16                   0.444    0.348    0.590    65.6%
-inception_v3            1.077    2.558    1.599    30.4%
+inception_v3            0.297    0.195    0.442    82.6%
 mobilenet_v3            0.630    0.730    0.855    49.8%
 ------------------------------------------------------------
