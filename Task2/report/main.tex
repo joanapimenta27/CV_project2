@@ -239,6 +239,13 @@ It should be noted that we use YOLOv8 rather than the most recent YOLO releases,
 Given the steep improvement of Deformable DETR from exp1 to exp2, with more computational power --- enabling the full exp3/exp4 sweeps and longer training schedules --- Deformable DETR could potentially match or even outperform YOLO.
 Nevertheless, YOLOv8n remains the best cost/performance trade-off here, delivering the strongest accuracy at a fraction of the training cost.
 
+\subsection{Qualitative Comparison}
+
+To inspect \textit{where} the two best detectors disagree, Figure~\ref{fig:yolo_def_detr} (Appendix~\ref{app:detection_compare}) overlays the predictions of YOLOv8n (exp4) and Deformable DETR (exp2) on the same held-out test images, alongside the ground-truth boxes (green dashed).
+Consistent with the quantitative results, YOLOv8n produces tighter, more complete detections with fewer misses, whereas Deformable DETR tends to miss small or partially occluded balls and is more prone to class confusions (e.g.\ \textit{Solid} vs.\ \textit{Striped}) and the occasional duplicate or low-confidence box.
+In particular, Deformable DETR frequently mislabels the \textit{Cue} ball as \textit{Solid} or \textit{Striped}, and it even fires on the table pockets (holes), producing more detections than there are ground-truth balls (e.g.\ Figure~\ref{fig:yolo_def_detr}, \texttt{compare\_03}).
+The shared samples make the recall gap (0.788 vs.\ 0.624) directly visible in the missed-ball cases.
+
 % ═══════════════════════════════════════════════════════════════════════════════
 % TASK 3b — Table Retrieval
 % ═══════════════════════════════════════════════════════════════════════════════
@@ -370,6 +377,47 @@ Each pair displays the original image (left) and the GradCAM overlay (right); gr
 
   \caption{Inception v3 Grad-CAM visualizations on original test set images.}
   \label{fig:gradcam_inception}
+\end{figure}
+
+\section{Detection Comparison: YOLOv8n vs.\ Deformable DETR}
+\label{app:detection_compare}
+
+Figure~\ref{fig:yolo_def_detr} overlays the predictions of YOLOv8n (exp4) and Deformable DETR (exp2) on the same held-out test images, alongside the ground-truth boxes (green dashed).
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{yolo_def_detr/compare_00.png}
+    \caption{Sample 1.}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{yolo_def_detr/compare_01.png}
+    \caption{Sample 2.}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{yolo_def_detr/compare_02.png}
+    \caption{Sample 3.}
+  \end{subfigure}
+
+  \vspace{0.3em}
+
+  \begin{subfigure}[b]{\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{yolo_def_detr/compare_03.png}
+    \caption{Sample 4.}
+  \end{subfigure}
+
+  \caption{Qualitative detection comparison on shared test images: YOLOv8n (exp4, left) vs.\ Deformable DETR (exp2, right). Green dashed boxes are ground truth; colored solid boxes are model predictions with confidence scores.}
+  \label{fig:yolo_def_detr}
 \end{figure}
 
 \end{document}

@@ -642,6 +642,177 @@ def _detection_accuracy(precision, recall):
     return float(1.0 / denom)
 
 
+# ─── Qualitative comparison: YOLO exp4 vs Deformable DETR exp2 ─────────────────
+
+QUAL_DIR        = str(TASK_DIR / "qualitative")
+QUAL_NUM_IMAGES = 4       # how many shared test images to visualise
+QUAL_CONF_THR   = 0.30    # confidence threshold for drawn predictions
+CLASS_COLORS    = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]  # Cue, Solid, Striped, Black
+
+
+def _yolo_predict(weights, img_path, class_names):
+    """Run YOLO on one image. Returns list of (cls_id, score, [x1,y1,x2,y2]) in original pixels."""
+    from ultralytics import YOLO
+
+    model = YOLO(weights)
+    res = model.predict(
+        source  = img_path,
+        imgsz   = IMG_SIZE_YOLO,
+        conf    = QUAL_CONF_THR,
+        device  = 0 if torch.cuda.is_available() else "cpu",
+        verbose = False,
+    )[0]
+
+    dets = []
+    for box, cls, conf in zip(
+        res.boxes.xyxy.cpu().numpy(),
+        res.boxes.cls.cpu().numpy().astype(int),
+        res.boxes.conf.cpu().numpy(),
+    ):
+        dets.append((int(cls), float(conf), box.tolist()))
+    return dets
+
+
+@torch.no_grad()
+def _detr_predict(model_save, variant, img_path, class_names):
+    """Run a DETR-family model on one image. Returns list of (cls_id, score, [x1,y1,x2,y2])."""
+    import transformers
+    from transformers import AutoImageProcessor
+
+    cfg        = DETR_VARIANTS[variant]
+    checkpoint = cfg["checkpoint"]
+    ModelClass = getattr(transformers, cfg["model_cls"])
+
+    processor = AutoImageProcessor.from_pretrained(
+        checkpoint,
+        size={"shortest_edge": IMG_SIZE_DETR, "longest_edge": 1333},
+    )
+    model = ModelClass.from_pretrained(
+        checkpoint,
+        num_labels=NUM_CLASSES,
+        ignore_mismatched_sizes=True,
+    ).to(DEVICE)
+    model.load_state_dict(torch.load(model_save, map_location=DEVICE))
+    model.eval()
+
+    img = Image.open(img_path).convert("RGB")
+    w_img, h_img = img.size
+    encoding = processor(images=img, return_tensors="pt").to(DEVICE)
+    outputs  = model(**encoding)
+
+    # post_process handles sigmoid/softmax + rescaling to original size internally
+    processed = processor.post_process_object_detection(
+        outputs,
+        target_sizes=[(h_img, w_img)],
+        threshold=QUAL_CONF_THR,
+    )[0]
+
+    dets = []
+    for score, label, box in zip(
+        processed["scores"].cpu().numpy(),
+        processed["labels"].cpu().numpy().astype(int),
+        processed["boxes"].cpu().numpy(),
+    ):
+        if 0 <= int(label) < len(class_names):
+            dets.append((int(label), float(score), box.tolist()))
+    return dets
+
+
+def _draw_panel(ax, img, gt, dets, title, class_names):
+    """Draw GT (green dashed) and predictions (per-class solid) on one matplotlib axis."""
+    import matplotlib.patches as patches
+
+    ax.imshow(img)
+    ax.set_title(title, fontsize=10)
+    ax.axis("off")
+
+    # ground truth: COCO [x, y, w, h] → green dashed rectangles
+    for (x, y, bw, bh), cls in zip(gt["boxes"], gt["labels"]):
+        ax.add_patch(patches.Rectangle(
+            (x, y), bw, bh, linewidth=1.5, edgecolor="#00ff00",
+            facecolor="none", linestyle="--",
+        ))
+
+    # predictions: xyxy → per-class solid rectangles
+    for cls_id, score, (x1, y1, x2, y2) in dets:
+        color = CLASS_COLORS[cls_id % len(CLASS_COLORS)]
+        ax.add_patch(patches.Rectangle(
+            (x1, y1), x2 - x1, y2 - y1, linewidth=2,
+            edgecolor=color, facecolor="none",
+        ))
+        ax.text(
+            x1, max(0, y1 - 3),
+            f"{class_names[cls_id]} {score:.2f}",
+            color="white", fontsize=7,
+            bbox=dict(facecolor=color, edgecolor="none", pad=0.5),
+        )
+
+
+def run_qualitative_comparison(test_samples):
+    """
+    Compare YOLO exp4 vs Deformable DETR exp2 on the SAME held-out test images,
+    drawing ground truth and each model's predictions side by side so failure
+    cases can be inspected directly. Saves figures under QUAL_DIR.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from dataset import CLASS_NAMES
+
+    yolo_weights = os.path.join(str(RUNS_DIR), "yolo", "exp4_all_data", "weights", "best.pt")
+    ddetr_model  = os.path.join(MODELS_DIR, "deformable_detr_exp2_plus_billiard.pth")
+
+    print(f"\n{'='*70}")
+    print("  Qualitative comparison: YOLO exp4  vs  Deformable DETR exp2")
+    print(f"{'='*70}")
+
+    if not os.path.exists(yolo_weights):
+        print(f"  ⚠ Missing YOLO weights: {yolo_weights} — skipping.")
+        return
+    if not os.path.exists(ddetr_model):
+        print(f"  ⚠ Missing Deformable DETR model: {ddetr_model} — skipping.")
+        return
+
+    os.makedirs(QUAL_DIR, exist_ok=True)
+
+    # deterministic selection of the SAME images for both models
+    rng     = random.Random(SEED)
+    n       = min(QUAL_NUM_IMAGES, len(test_samples))
+    chosen  = rng.sample(test_samples, n)
+
+    for i, sample in enumerate(chosen):
+        img_path = sample["image_path"]
+        img      = Image.open(img_path).convert("RGB")
+
+        yolo_dets  = _yolo_predict(yolo_weights, img_path, CLASS_NAMES)
+        ddetr_dets = _detr_predict(ddetr_model, "deformable_detr", img_path, CLASS_NAMES)
+
+        fig, axes = plt.subplots(1, 2, figsize=(14, 7))
+        _draw_panel(
+            axes[0], img, sample, yolo_dets,
+            f"YOLOv8n (exp4) — {len(yolo_dets)} det / {len(sample['labels'])} GT",
+            CLASS_NAMES,
+        )
+        _draw_panel(
+            axes[1], img, sample, ddetr_dets,
+            f"Deformable DETR (exp2) — {len(ddetr_dets)} det / {len(sample['labels'])} GT",
+            CLASS_NAMES,
+        )
+        fig.suptitle(
+            f"{os.path.basename(img_path)}   "
+            f"(green dashed = ground truth, conf ≥ {QUAL_CONF_THR})",
+            fontsize=11,
+        )
+        fig.tight_layout()
+
+        out_path = os.path.join(QUAL_DIR, f"compare_{i:02d}.png")
+        fig.savefig(out_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  ✓ saved {out_path}")
+
+    print(f"\n✓ Qualitative comparison saved to {QUAL_DIR}")
+
+
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -654,67 +825,72 @@ if __name__ == "__main__":
 
     all_results = []
 
-    # ── Step 2: YOLO experiments ─────────────────────────────────────────────
-    print("\n\n" + "=" * 70)
-    print("  YOLO Experiments")
-    print("=" * 70)
+    # # ── Step 2: YOLO experiments ─────────────────────────────────────────────
+    # print("\n\n" + "=" * 70)
+    # print("  YOLO Experiments")
+    # print("=" * 70)
 
-    for exp in EXPERIMENTS:
-        name = exp["name"]
-        data = exp_data[name]
-        metrics = run_yolo_experiment(name, data["yaml"])
-        all_results.append({
-            "model":     "yolo",
-            "exp_name":  name,
-            **metrics,
-        })
-        save_results(all_results)
+    # for exp in EXPERIMENTS:
+    #     name = exp["name"]
+    #     data = exp_data[name]
+    #     metrics = run_yolo_experiment(name, data["yaml"])
+    #     all_results.append({
+    #         "model":     "yolo",
+    #         "exp_name":  name,
+    #         **metrics,
+    #     })
+    #     save_results(all_results)
 
-    # ── Step 3: DETR experiments ─────────────────────────────────────────────
-    print("\n\n" + "=" * 70)
-    print("  DETR Experiments")
-    print("=" * 70)
+    # # ── Step 3: DETR experiments ─────────────────────────────────────────────
+    # # print("\n\n" + "=" * 70)
+    # # print("  DETR Experiments")
+    # # print("=" * 70)
 
-    for exp in EXPERIMENTS:
-        name = exp["name"]
-        data = exp_data[name]
-        metrics = run_detr_experiment(
-            name,
-            data["train"],
-            data["val"],
-            data["test"],
-        )
-        all_results.append({
-            "model":     "detr",
-            "exp_name":  name,
-            **metrics,
-        })
-        save_results(all_results)
+    # # for exp in EXPERIMENTS:
+    # #     name = exp["name"]
+    # #     data = exp_data[name]
+    # #     metrics = run_detr_experiment(
+    # #         name,
+    # #         data["train"],
+    # #         data["val"],
+    # #         data["test"],
+    # #     )
+    # #     all_results.append({
+    # #         "model":     "detr",
+    # #         "exp_name":  name,
+    # #         **metrics,
+    # #     })
+    # #     save_results(all_results)
 
     # ── Step 4: Deformable DETR experiments ────────────────────────────
-    print("\n\n" + "=" * 70)
-    print("  Deformable DETR Experiments")
-    print("=" * 70)
+    # print("\n\n" + "=" * 70)
+    # print("  Deformable DETR Experiments")
+    # print("=" * 70)
 
-    DEFORMABLE_DETR_EXPS = {"exp1_original_only", "exp2_plus_billiard"}
+    # DEFORMABLE_DETR_EXPS = {"exp1_original_only", "exp2_plus_billiard"}
 
-    for exp in EXPERIMENTS:
-        name = exp["name"]
-        if name not in DEFORMABLE_DETR_EXPS:
-            continue
-        data = exp_data[name]
-        metrics = run_detr_experiment(
-            name,
-            data["train"],
-            data["val"],
-            data["test"],
-            variant="deformable_detr",
-        )
-        all_results.append({
-            "model":     "deformable_detr",
-            "exp_name":  name,
-            **metrics,
-        })
-        save_results(all_results)
+    # for exp in EXPERIMENTS:
+    #     name = exp["name"]
+    #     if name not in DEFORMABLE_DETR_EXPS:
+    #         continue
+    #     data = exp_data[name]
+    #     metrics = run_detr_experiment(
+    #         name,
+    #         data["train"],
+    #         data["val"],
+    #         data["test"],
+    #         variant="deformable_detr",
+    #     )
+    #     all_results.append({
+    #         "model":     "deformable_detr",
+    #         "exp_name":  name,
+    #         **metrics,
+    #     })
+    #     save_results(all_results)
+
+    # ── Step 5: qualitative comparison on shared test images ─────────────────
+    # The test set is fixed across all experiments, so any exp's test split is
+    # the same image set used to compare where YOLO exp4 and Def. DETR exp2 fail.
+    run_qualitative_comparison(exp_data["exp4_all_data"]["test"])
 
     print("\n✓ All experiments complete.")
