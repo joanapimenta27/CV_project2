@@ -9,8 +9,9 @@ Experiments (same test set across all):
   exp4 - + Pool Ball Detection (all data)
 
 Models:
-  YOLO  : YOLOv8n finetuned via ultralytics
-  DETR  : facebook/detr-resnet-50 finetuned via transformers
+  YOLO            : YOLOv8n finetuned via ultralytics
+  DETR            : facebook/detr-resnet-50 finetuned via transformers
+  Deformable DETR : SenseTime/deformable-detr finetuned via transformers
 
 Metrics reported: mAP@50, mAP@50:95, Precision, Recall
 Accuracy is reported as detection accuracy: TP / (TP + FP + FN), derived from precision and recall.
@@ -35,7 +36,7 @@ RUNS_DIR      = TASK_DIR / "runs"
 SEED          = 42
 YOLO_EPOCHS   = 50
 DETR_EPOCHS   = 100
-BATCH_SIZE    = 8
+BATCH_SIZE    = 1
 LR_DETR       = 1e-5
 WEIGHT_DECAY  = 1e-4
 IMG_SIZE_YOLO = 640
@@ -56,8 +57,12 @@ np.random.seed(SEED)
 torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark     = False
+# Deformable DETR receives variable-sized padded batches, so forcing
+# deterministic cuDNN conv algorithms (with benchmark off) can fail to find a
+# valid workspace and raise CUDNN_STATUS_INTERNAL_ERROR on backward. Let cuDNN
+# pick fast algorithms per shape; seeds above still give run-to-run stability.
+torch.backends.cudnn.deterministic = False
+torch.backends.cudnn.benchmark     = True
 
 
 def seed_worker(worker_id):
@@ -157,9 +162,10 @@ def cxcywh_to_xyxy(boxes):
 
 
 @torch.no_grad()
-def compute_detr_map(model, loader, iou_thresholds=None):
+def compute_detr_map(model, loader, iou_thresholds=None, use_sigmoid=False):
     """
-    Multi-class mAP computation for DETR (averaged over NUM_CLASSES).
+    Multi-class mAP computation for DETR-family models (averaged over NUM_CLASSES).
+    Set use_sigmoid=True for Deformable DETR (focal loss, no background class).
     Returns dict: {mAP50, mAP50_95, precision, recall, accuracy}
     """
     if iou_thresholds is None:
@@ -179,10 +185,15 @@ def compute_detr_map(model, loader, iou_thresholds=None):
 
         # DETR logits: [B, num_queries, num_classes+1]
         # DETR boxes:  [B, num_queries, 4] (cx, cy, w, h, normalised)
-        logits = outputs.logits    # [B, Q, C+1]
+        logits = outputs.logits    # DETR: [B, Q, C+1] | Deformable: [B, Q, C]
         boxes  = outputs.pred_boxes  # [B, Q, 4]
 
-        probs = logits.softmax(-1)[:, :, :-1]   # exclude no-object class
+        if use_sigmoid:
+            # Deformable DETR uses focal loss → sigmoid, no background class
+            probs = logits.sigmoid()
+        else:
+            # Vanilla DETR uses softmax with a trailing no-object class
+            probs = logits.softmax(-1)[:, :, :-1]
         scores, labels = probs.max(-1)           # [B, Q]
 
         for i in range(len(targets)):
@@ -380,20 +391,43 @@ def train_detr_epoch(model, loader, optimizer):
     return total_loss / len(loader.dataset)
 
 
-def run_detr_experiment(exp_name, train_s, val_s, test_s):
-    """Finetune DETR and evaluate on test set. Returns metrics dict."""
-    from transformers import AutoImageProcessor, DetrForObjectDetection
+DETR_VARIANTS = {
+    "detr": {
+        "label":       "DETR",
+        "checkpoint":  "facebook/detr-resnet-50",
+        "model_cls":   "DetrForObjectDetection",
+        "use_sigmoid": False,   # softmax + trailing no-object class
+    },
+    "deformable_detr": {
+        "label":       "Deformable DETR",
+        "checkpoint":  "SenseTime/deformable-detr",
+        "model_cls":   "DeformableDetrForObjectDetection",
+        "use_sigmoid": True,    # focal loss → sigmoid, no background class
+    },
+}
+
+
+def run_detr_experiment(exp_name, train_s, val_s, test_s, variant="detr"):
+    """Finetune a DETR-family model and evaluate on test set. Returns metrics dict."""
+    import transformers
+    from transformers import AutoImageProcessor
+
+    cfg         = DETR_VARIANTS[variant]
+    label       = cfg["label"]
+    checkpoint  = cfg["checkpoint"]
+    use_sigmoid = cfg["use_sigmoid"]
+    ModelClass  = getattr(transformers, cfg["model_cls"])
 
     print(f"\n{'='*60}")
-    print(f"  DETR  |  {exp_name}")
+    print(f"  {label}  |  {exp_name}")
     print(f"  Train: {len(train_s)}  Val: {len(val_s)}  Test: {len(test_s)}")
     print(f"{'='*60}")
 
-    model_save = os.path.join(MODELS_DIR, f"detr_{exp_name}.pth")
+    model_save = os.path.join(MODELS_DIR, f"{variant}_{exp_name}.pth")
 
     processor = AutoImageProcessor.from_pretrained(
-        "facebook/detr-resnet-50",
-        size={"shortest_edge": IMG_SIZE_DETR, "longest_edge": IMG_SIZE_DETR},
+        checkpoint,
+        size={"shortest_edge": IMG_SIZE_DETR, "longest_edge": 1333},
     )
 
     g = torch.Generator()
@@ -421,23 +455,19 @@ def run_detr_experiment(exp_name, train_s, val_s, test_s):
 
     if os.path.exists(model_save):
         print(f"  Found {model_save} — loading for test evaluation.")
-        model = DetrForObjectDetection.from_pretrained(
-            "facebook/detr-resnet-50",
+        model = ModelClass.from_pretrained(
+            checkpoint,
             num_labels=NUM_CLASSES,
             ignore_mismatched_sizes=True,
         ).to(DEVICE)
 
-        print(model.config.num_labels)              # expect 4
-        print(model.class_labels_classifier)         # Linear(in=256, out=5)
-        print(len(model.config.id2label)) 
-        print(model.config.id2label)
         model.load_state_dict(torch.load(model_save, map_location=DEVICE))
-        metrics = compute_detr_map(model, test_loader)
-        _print_detr_metrics(metrics, exp_name)
+        metrics = compute_detr_map(model, test_loader, use_sigmoid=use_sigmoid)
+        _print_detr_metrics(metrics, exp_name, label)
         return metrics
 
-    model = DetrForObjectDetection.from_pretrained(
-        "facebook/detr-resnet-50",
+    model = ModelClass.from_pretrained(
+        checkpoint,
         num_labels=NUM_CLASSES,
         ignore_mismatched_sizes=True,
     ).to(DEVICE)
@@ -460,7 +490,7 @@ def run_detr_experiment(exp_name, train_s, val_s, test_s):
 
     for epoch in range(1, DETR_EPOCHS + 1):
         train_loss = train_detr_epoch(model, train_loader, optimizer)
-        val_met    = compute_detr_map(model, val_loader)
+        val_met    = compute_detr_map(model, val_loader, use_sigmoid=use_sigmoid)
         scheduler.step()
 
         print(
@@ -479,13 +509,13 @@ def run_detr_experiment(exp_name, train_s, val_s, test_s):
     print(f"\n  Best epoch: {best_epoch}  val_mAP50: {best_val_map:.4f}")
 
     model.load_state_dict(torch.load(model_save, map_location=DEVICE))
-    metrics = compute_detr_map(model, test_loader)
-    _print_detr_metrics(metrics, exp_name)
+    metrics = compute_detr_map(model, test_loader, use_sigmoid=use_sigmoid)
+    _print_detr_metrics(metrics, exp_name, label)
     return metrics
 
 
-def _print_detr_metrics(m, name):
-    print(f"\n── DETR Test Results [{name}] ────────────────────────")
+def _print_detr_metrics(m, name, label="DETR"):
+    print(f"\n── {label} Test Results [{name}] ────────────────────────")
     print(f"  mAP@50    : {m['mAP50']:.4f}")
     print(f"  mAP@50:95 : {m['mAP50_95']:.4f}")
     print(f"  Precision : {m['precision']:.4f}")
@@ -569,6 +599,7 @@ def save_results(all_results):
     all_results: list of {exp_name, model, mAP50, mAP50_95, precision, recall, accuracy}
     """
     col = 30
+    label_map = {"yolo": "YOLO", "detr": "DETR", "deformable_detr": "Deformable DETR"}
     with open(RESULTS_FILE, "w") as f:
         f.write("=" * 70 + "\n")
         f.write("  Task 3 - Pool Ball Detection — Test Results\n")
@@ -585,12 +616,12 @@ def save_results(all_results):
 
         # summary table
         f.write("-" * 70 + "\n")
-        header = f"{'Model':<8} {'Experiment':<35} {'mAP50':>7} {'mAP50:95':>9} {'Prec':>7} {'Rec':>7} {'Acc':>7}"
+        header = f"{'Model':<16} {'Experiment':<35} {'mAP50':>7} {'mAP50:95':>9} {'Prec':>7} {'Rec':>7} {'Acc':>7}"
         f.write(header + "\n")
         f.write("-" * 70 + "\n")
         for r in all_results:
             f.write(
-                f"{'YOLO' if r['model']=='yolo' else 'DETR':<8} "
+                f"{label_map.get(r['model'], r['model']):<16} "
                 f"{r['exp_name']:<35} "
                 f"{r['mAP50']:>7.4f} "
                 f"{r['mAP50_95']:>9.4f} "
@@ -655,6 +686,32 @@ if __name__ == "__main__":
         )
         all_results.append({
             "model":     "detr",
+            "exp_name":  name,
+            **metrics,
+        })
+        save_results(all_results)
+
+    # ── Step 4: Deformable DETR experiments ────────────────────────────
+    print("\n\n" + "=" * 70)
+    print("  Deformable DETR Experiments")
+    print("=" * 70)
+
+    DEFORMABLE_DETR_EXPS = {"exp1_original_only", "exp2_plus_billiard"}
+
+    for exp in EXPERIMENTS:
+        name = exp["name"]
+        if name not in DEFORMABLE_DETR_EXPS:
+            continue
+        data = exp_data[name]
+        metrics = run_detr_experiment(
+            name,
+            data["train"],
+            data["val"],
+            data["test"],
+            variant="deformable_detr",
+        )
+        all_results.append({
+            "model":     "deformable_detr",
             "exp_name":  name,
             **metrics,
         })
