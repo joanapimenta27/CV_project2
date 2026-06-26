@@ -5,12 +5,12 @@ output
 yolo_dataset/
 images/
 12-image-retrieval.ipynb
-yolov8n.pt
+*.pt
 runs/
-retrieval_model.pt
 .idea/
 __pycache__/
 yolo_data/
 data/
 models/
 data_analysis/
+additional_info/
