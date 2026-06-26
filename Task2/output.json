@@ -1,7 +1,7 @@
 [
   {
     "image": "data/8-Ball Pool.v3i.coco/train/90_png.rf.cc19908ab37dc78235324d2e16614622.jpg",
-    "ball_count": 9
+    "ball_count": 8
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/63_png.rf.f5b4c1c38fa5fd80098db299a9f5f331.jpg",
@@ -9,7 +9,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/137_png.rf.bbe9edbb99cbe83b2d718df3122d9344.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/7_png.rf.3ff9087c873d2ff25e8d5c120bb417e8.jpg",
@@ -37,7 +37,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/179_png.rf.61fcb6e012295881e5f82e05b6d15283.jpg",
-    "ball_count": 15
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/3t_png.rf.24d7be26d05ffb22bd6af95f0e28b99c.jpg",
@@ -45,7 +45,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/46_png.rf.e8ee7736ebfa4a3181665065498b2b12.jpg",
-    "ball_count": 12
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/2_png.rf.e294eab9e1b8504f18e1964e03f9e9e5.jpg",
@@ -73,7 +73,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/16_png.rf.691cc1c2ecb1a6b9e2b253b55ee31e37.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/189_png.rf.35e0d3792b1aa85a1a2e55167fd0d8c5.jpg",
@@ -85,7 +85,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/96_png.rf.99112aad2385b754f6a041d89282c4f9.jpg",
-    "ball_count": 7
+    "ball_count": 6
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/11_png.rf.6b73a508e3eafaac95768aae9325dabc.jpg",
@@ -105,7 +105,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/38_png.rf.5f7178d32f8c80830acba72ceaa53c52.jpg",
-    "ball_count": 8
+    "ball_count": 7
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/175_png.rf.3bb291132648e4ddc6318584b8fab3f6.jpg",
@@ -113,7 +113,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/56_png.rf.d816086571a6166985bd89660706de3c.jpg",
-    "ball_count": 10
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/42_png.rf.c6be4b18ac2a7d7c6e71b98132d5b411.jpg",
@@ -125,7 +125,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/89_png.rf.f6d530aecfb9a6a925bb6db4a606a529.jpg",
-    "ball_count": 10
+    "ball_count": 9
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/24_png.rf.76109e322271997766d83ebb01eba055.jpg",
@@ -137,7 +137,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/98_png.rf.68df6216acc2ca690c16e3f15e3969ac.jpg",
-    "ball_count": 4
+    "ball_count": 5
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/146_png.rf.8c716f42d6929f1b4c27cbfde0544e05.jpg",
@@ -145,7 +145,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/124_png.rf.1c7ed97791213cc079fccc558f1ad959.jpg",
-    "ball_count": 17
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/13_png.rf.6997e656c43b72e712856bc7557bedf9.jpg",
@@ -165,11 +165,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/2t_png.rf.cc82f8a1e04420002737935546caff16.jpg",
-    "ball_count": 15
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/136_png.rf.e99c3dfd6e84ce294cdabc3bb5ee8a75.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/190_png.rf.24ed612fdc752703c31861be4bc95545.jpg",
@@ -189,7 +189,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/16t_png.rf.119ab55b2bf60739d833fe614cf03c92.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/20t_png.rf.9c3224a237aafafb9884ca7c91a4ddb3.jpg",
@@ -201,7 +201,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/100_png.rf.1d10e5312c53cc3fb4e0bf319dd466ba.jpg",
-    "ball_count": 11
+    "ball_count": 10
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/9_png.rf.3a4164e5647feea77eb3062be7e65aea.jpg",
@@ -213,7 +213,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/157_png.rf.27c930f4a54872dbae1acb7faf69b5af.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/86_png.rf.ed680afb145347de62fa9e5dd2b90bbe.jpg",
@@ -221,7 +221,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/131_png.rf.593310c39f8835ed0786033b6690de45.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/140_png.rf.6645e10bad5cf3f197b71ddb6b34e6b4.jpg",
@@ -233,7 +233,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/103_png.rf.8837c4ba6e91c59a634fc8cd30cd204b.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/35_png.rf.3b3f67570700881bc1962c56d85d95eb.jpg",
@@ -249,15 +249,15 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/70_png.rf.c11964e069c3c801f450ed11cbc6a414.jpg",
-    "ball_count": 9
+    "ball_count": 7
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/60_png.rf.86486015e392f6e4d94b76b74845f588.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/105_png.rf.ea359f2dfa667da92e30a8ceeefe7e62.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/133_png.rf.a4164ecd79cdd480304adcf094cd17e3.jpg",
@@ -269,11 +269,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/51_png.rf.6cd3806d5bbf3bb4c08aa71f88200357.jpg",
-    "ball_count": 4
+    "ball_count": 5
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/139_png.rf.3b1d0480bfeb169028854cb472ea5f25.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/118_png.rf.3e82e1f3d657302b61a62c113271b753.jpg",
@@ -289,15 +289,15 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/162_png.rf.faeb269d920f46126201519c32565e6d.jpg",
-    "ball_count": 12
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/144_png.rf.5c3890791bfecba0869eafb73fa3a4f5.jpg",
-    "ball_count": 14
+    "ball_count": 15
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/18_png.rf.deca17bfe3ef6a0738238319d1dcdd71.jpg",
-    "ball_count": 9
+    "ball_count": 10
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/138_png.rf.8f90a2d90a20d34006c446dc14a852c0.jpg",
@@ -313,7 +313,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/68_png.rf.2abffb51d52abb9355fb9037922c7535.jpg",
-    "ball_count": 10
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/20a_png.rf.a3aea3e21d9ff672c555eaa2dcd6c945.jpg",
@@ -325,7 +325,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/33_png.rf.297fe8781d6a91fb415a3483e34b5d6d.jpg",
-    "ball_count": 8
+    "ball_count": 7
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/11f_png.rf.eb0169eccfb6b264a582491457ff37b6.jpg",
@@ -333,7 +333,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/188_png.rf.817e806abd4f5edc9588cc0dbf1a8616.jpg",
-    "ball_count": 17
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/66_png.rf.4cae8e3276f22572dc03614ba2654a27.jpg",
@@ -345,7 +345,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/61_png.rf.fcb03285eaaa0805f6a53443b10cd4fe.jpg",
-    "ball_count": 7
+    "ball_count": 8
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/34_png.rf.407889c8b2afe2a57c57461fa46b2d4f.jpg",
@@ -353,15 +353,15 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/10_png.rf.9b8c9cafc4edaba51d6fc14bc4ef7186.jpg",
-    "ball_count": 9
+    "ball_count": 10
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/13t_png.rf.6106fd96f4902de298dac63ac73ac264.jpg",
-    "ball_count": 14
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/7t_png.rf.d593f52ab7cb17881fddcaf5de468819.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/3_png.rf.3623643d6ea770476054dcbc18ec4da8.jpg",
@@ -377,7 +377,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/180_png.rf.d95ed08408ababb588c6d1af919a1ba5.jpg",
-    "ball_count": 16
+    "ball_count": 15
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/1t_png.rf.4e6421a849d36687701eb5b4187ff417.jpg",
@@ -393,7 +393,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/75_png.rf.fec3448d8e1f00fd7d681730877c8e37.jpg",
-    "ball_count": 7
+    "ball_count": 6
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/123_png.rf.c77820fd3abbca5d6265af63564f9564.jpg",
@@ -413,11 +413,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/15_png.rf.f28eaebb6a7dae29a59dd6b9d28ea7d5.jpg",
-    "ball_count": 7
+    "ball_count": 9
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/83_png.rf.660e765884a44b4f58b54170810c4888.jpg",
-    "ball_count": 15
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/173_png.rf.f39ff7cc18819e237dd9a08f84c71d40.jpg",
@@ -473,7 +473,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/47_png.rf.bc20932b8fce905f2947cfc69dd6920c.jpg",
-    "ball_count": 12
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/7f_png.rf.4c4c0c1f3dbe608fab29a732857d2927.jpg",
@@ -481,11 +481,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/4a_png.rf.a6bb5c5706fd8628eb53d34a122cf441.jpg",
-    "ball_count": 11
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/166_png.rf.2a5fbe9b778584d26692a480bda6f22a.jpg",
-    "ball_count": 14
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/92_png.rf.5436107fa80a186911267011f1bad05e.jpg",
@@ -509,7 +509,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/30_png.rf.e72e10b42198e1de89cc63429368e384.jpg",
-    "ball_count": 10
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/134_png.rf.eafc70891a991c969df70bd817a63375.jpg",
@@ -525,7 +525,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/54_png.rf.18d8023ac7bcdc316c9be6efbd0070ef.jpg",
-    "ball_count": 10
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/163_png.rf.caf94b785a094d025843b480af8738cc.jpg",
@@ -537,7 +537,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/95_png.rf.03182e61750c77320a1463bb756ed0cf.jpg",
-    "ball_count": 12
+    "ball_count": 15
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/191_png.rf.f0dae604026d771ea10fc7983a5b03e7.jpg",
@@ -545,7 +545,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/23t_png.rf.f9c0505fe9f3c1f4d088ff99d4625b48.jpg",
-    "ball_count": 17
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/41_png.rf.1b958373ee00ad9b6c72ccde65ac6c44.jpg",
@@ -565,7 +565,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/6t_png.rf.3bfa7c04f03519e61d659108c308de32.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/22_png.rf.57aac7aececd3a52d497d28fbb121c8c.jpg",
@@ -577,7 +577,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/158_png.rf.26ee57b4f05c15fe87b27ed170cd79b2.jpg",
-    "ball_count": 10
+    "ball_count": 9
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/84_png.rf.ce54014b2da8c78d7c8d54001ffdf576.jpg",
@@ -589,7 +589,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/53_png.rf.855b0f59076e870a81b9fa99f43590a7.jpg",
-    "ball_count": 11
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/164_png.rf.adf1d66e8c2fa71261ca3f1d6852fa16.jpg",
@@ -601,15 +601,15 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/142_png.rf.7094e2d69746d686d71b971d474ae84d.jpg",
-    "ball_count": 12
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/44_png.rf.fa470a214cd0390f0989f6f83d9bdb4b.jpg",
-    "ball_count": 3
+    "ball_count": 2
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/21f_png.rf.1d0b1d461f995224e4dda334c1e6a20c.jpg",
-    "ball_count": 14
+    "ball_count": 15
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/193_png.rf.0d9b4209cb5fb72ec5b2eed87c2f25cc.jpg",
@@ -625,35 +625,35 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/101_png.rf.ae5f060fc5ed9e0adfaf2ffa7d786c67.jpg",
-    "ball_count": 12
-  },
-  {
-    "image": "data/8-Ball Pool.v3i.coco/train/88_png.rf.b58437827b6f9fab3cebf868795b9e21.jpg",
-    "ball_count": 11
-  },
-  {
-    "image": "data/8-Ball Pool.v3i.coco/train/48_png.rf.6d53741dd87298c5fedafc4e15fab214.jpg",
-    "ball_count": 7
-  },
-  {
-    "image": "data/8-Ball Pool.v3i.coco/train/12_png.rf.9071d30b04e7162eeae5abb28b0ff82c.jpg",
     "ball_count": 13
   },
   {
+    "image": "data/8-Ball Pool.v3i.coco/train/88_png.rf.b58437827b6f9fab3cebf868795b9e21.jpg",
+    "ball_count": 10
+  },
+  {
+    "image": "data/8-Ball Pool.v3i.coco/train/48_png.rf.6d53741dd87298c5fedafc4e15fab214.jpg",
+    "ball_count": 6
+  },
+  {
+    "image": "data/8-Ball Pool.v3i.coco/train/12_png.rf.9071d30b04e7162eeae5abb28b0ff82c.jpg",
+    "ball_count": 14
+  },
+  {
     "image": "data/8-Ball Pool.v3i.coco/train/194_png.rf.6b3c01d7e039ffa56fe5023410954781.jpg",
-    "ball_count": 7
+    "ball_count": 6
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/19t_png.rf.379beff6ca036f9dfee92873c63e1c91.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/58_png.rf.b94027c8488125d21180dde164fc71f6.jpg",
-    "ball_count": 7
+    "ball_count": 8
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/5a_png.rf.bae1d48b3d2d96a990799b836ecebcbb.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/79_png.rf.2789d3bf1e3be008d14e55f240bd3bc4.jpg",
@@ -665,15 +665,15 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/52_png.rf.d9ef7051544ef241be7a8134959f3411.jpg",
-    "ball_count": 11
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/80_png.rf.6c9e5b41ab30f9b3891c82322220421c.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/8_png.rf.00b44beea89152bdea072ac458c5ec85.jpg",
-    "ball_count": 4
+    "ball_count": 3
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/183_png.rf.e95dd6384d920b9bc1a7360580bc06d0.jpg",
@@ -697,7 +697,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/184_png.rf.a6c6949a3896015ff99ada47dc75393b.jpg",
-    "ball_count": 13
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/172_png.rf.fcfccb64edd6563c971ed5aadc369851.jpg",
@@ -705,11 +705,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/4_png.rf.e18166281030baded761bc4f93be6120.jpg",
-    "ball_count": 8
+    "ball_count": 7
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/174_png.rf.de712a5dfd0118a5ad22b8dda3158691.jpg",
-    "ball_count": 13
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/115_png.rf.ed51d53dd5c384b1f26a2b6ece52ad69.jpg",
@@ -717,7 +717,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/76_png.rf.c2154cf087f65699b7b490adbae0b965.jpg",
-    "ball_count": 8
+    "ball_count": 9
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/102_png.rf.e106f609270b206b301a09b5c5473e95.jpg",
@@ -733,7 +733,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/16a_png.rf.e7f801e6e3e47469fbbd3bdd34677025.jpg",
-    "ball_count": 13
+    "ball_count": 12
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/18t_png.rf.52573d3d561f4ef4c73fbcc5a0d18752.jpg",
@@ -757,11 +757,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/176_png.rf.efe1d54c6d6afc77df454c854179fe54.jpg",
-    "ball_count": 15
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/15a_png.rf.d7f7746ea5afb68e6b42346c4990fa43.jpg",
-    "ball_count": 14
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/14t_png.rf.3c97b229d4e5a2823995bdb9dbd1db76.jpg",
@@ -785,7 +785,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/178_png.rf.5087fa5324451e07d2ed4f3d0e39b8e7.jpg",
-    "ball_count": 8
+    "ball_count": 10
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/141_png.rf.29f059d54b07ead4d4680ae0a8a66ec4.jpg",
@@ -805,7 +805,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/9a_png.rf.320750a7ef629a2e6980cea9f008f5c0.jpg",
-    "ball_count": 14
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/6_png.rf.58e75c08e57045157699ab7736195989.jpg",
@@ -833,7 +833,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/22f_png.rf.5f4dedb3e61ea2ced7d183a74035d313.jpg",
-    "ball_count": 10
+    "ball_count": 9
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/114_png.rf.98b2144c25b9f48816abd7edb00f365c.jpg",
@@ -845,11 +845,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/171_png.rf.e0f78688a6d730302708d2eec60a4bdf.jpg",
-    "ball_count": 16
+    "ball_count": 17
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/3f_png.rf.81c7e132365ef95bb19380ca389025f6.jpg",
-    "ball_count": 16
+    "ball_count": 15
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/151_png.rf.dded9697689a87303c84573468e354a9.jpg",
@@ -865,7 +865,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/19_png.rf.9bdb39240f3b93c04a458babb9612353.jpg",
-    "ball_count": 7
+    "ball_count": 8
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/145_png.rf.223f80e4aff2b64f2711cd186532e118.jpg",
@@ -873,7 +873,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/110_png.rf.9a38b6057e543f83b58aa59b9748688b.jpg",
-    "ball_count": 2
+    "ball_count": 3
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/12f_png.rf.5a7e571b0b0c0eef39ae35682db8394f.jpg",
@@ -885,7 +885,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/177_png.rf.44e0980f0a0137fa46f4a9ac8c51e603.jpg",
-    "ball_count": 15
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/109_png.rf.0d8042ff3ef7a93feb5a18be8a42ca80.jpg",
@@ -897,19 +897,19 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/36_png.rf.0335463c111a76dc82384e5664c969ca.jpg",
-    "ball_count": 12
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/7a_png.rf.7cf9f36a358969bd16be866d1570a303.jpg",
-    "ball_count": 15
+    "ball_count": 14
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/71_png.rf.d0fcba57880d4305e4d6881d171c6ad3.jpg",
-    "ball_count": 12
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/14a_png.rf.81c6d6e6686127d4274b4b8bbf8256b7.jpg",
-    "ball_count": 14
+    "ball_count": 15
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/165_png.rf.24adc446423ba35cdbff16ccaffc9785.jpg",
@@ -925,7 +925,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/181_png.rf.23ccd3b4b31a6fef484f7f0d25cf89d7.jpg",
-    "ball_count": 15
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/25t_png.rf.28a806c6e73dff70dbdafd6d5343f0ff.jpg",
@@ -937,7 +937,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/21a_png.rf.34ea0016904d75da861731071be2058f.jpg",
-    "ball_count": 14
+    "ball_count": 13
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/11t_png.rf.bfd0b31ac2643b2a5d526f315fbf1812.jpg",
@@ -961,11 +961,11 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/153_png.rf.6e13f8c07bec12bd7e4094e6179bd363.jpg",
-    "ball_count": 12
+    "ball_count": 11
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/170_png.rf.41755d44f9afc99e7cda8ff7b064d3e5.jpg",
-    "ball_count": 5
+    "ball_count": 6
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/23_png.rf.16eca710aad8f132510abb5de8930fc0.jpg",
@@ -973,7 +973,7 @@
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/125_png.rf.746e605d23baaa43560542b8554b714c.jpg",
-    "ball_count": 17
+    "ball_count": 16
   },
   {
     "image": "data/8-Ball Pool.v3i.coco/train/160_png.rf.6f41e2456edd6888c9fae22813acc55e.jpg",

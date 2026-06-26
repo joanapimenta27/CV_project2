@@ -106,7 +106,7 @@ def build_model(backbone):
         model.classifier[6] = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, 1))
 
     elif backbone == "inception_v3":
-        model = models.inception_v3(weights=None)
+        model = models.inception_v3(weights=None, transform_input=True)
         model.AuxLogits.fc = nn.Linear(model.AuxLogits.fc.in_features, 1)
         in_features = model.fc.in_features
         model.fc = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, 1))

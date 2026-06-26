@@ -36,9 +36,9 @@ from torchvision import transforms, models
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
-BACKBONE   = "vgg16"
-MODEL_PATH = "models/vgg16.pth"
-IMG_SIZE   = 224
+BACKBONE   = "inception_v3"
+MODEL_PATH = "models/inception_v3.pth"
+IMG_SIZE   = 299
 BATCH_SIZE = 16
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,9 +46,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # ─── Model ────────────────────────────────────────────────────────────────────
 
 def build_model():
-    model = models.vgg16(weights=None)
-    in_features = model.classifier[6].in_features
-    model.classifier[6] = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, 1))
+    model = models.inception_v3(weights=None, transform_input=True)
+    model.AuxLogits.fc = nn.Linear(model.AuxLogits.fc.in_features, 1)
+    in_features = model.fc.in_features
+    model.fc = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, 1))
     return model
 
 
